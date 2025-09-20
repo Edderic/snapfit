@@ -2,6 +2,7 @@ import UIKit
 import ARKit
 import SceneKit
 
+@available(iOS 13.0, *)
 class FaceMeasurementViewController: UIViewController {
     
     // MARK: - IBOutlets

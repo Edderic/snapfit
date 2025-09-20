@@ -15,7 +15,7 @@ class DataExportManager {
     private var serverURL: String?
     
     /// User consent for data sharing
-    private var hasUserConsent: Bool = false
+    var hasUserConsent: Bool = false
     
     init() {
         // Load saved consent status
