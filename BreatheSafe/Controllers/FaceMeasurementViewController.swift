@@ -212,6 +212,7 @@ class FaceMeasurementViewController: UIViewController {
         measurementCount = 0
         measurementEngine.clearHistory()
         
+        
         startButton.setTitle("Stop Measurement", for: .normal)
         startButton.backgroundColor = UIColor.systemRed
         exportButton.isEnabled = false
@@ -366,7 +367,11 @@ extension FaceMeasurementViewController: ARSCNViewDelegate {
         guard let faceAnchor = anchor as? ARFaceAnchor else { return }
         
         // Create face geometry visualization
-        let faceGeometry = ARSCNFaceGeometry(device: sceneView.device!)
+        guard let device = sceneView.device else {
+            return
+        }
+        
+        let faceGeometry = ARSCNFaceGeometry(device: device)
         let faceNode = SCNNode(geometry: faceGeometry)
         
         let material = faceGeometry?.firstMaterial
@@ -377,10 +382,12 @@ extension FaceMeasurementViewController: ARSCNViewDelegate {
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
-        guard let faceAnchor = anchor as? ARFaceAnchor,
-              let faceGeometry = node.geometry as? ARSCNFaceGeometry else { return }
+        guard let faceAnchor = anchor as? ARFaceAnchor else { return }
         
-        faceGeometry.update(from: faceAnchor.geometry)
+        // Update the face geometry visualization if it exists
+        if let faceGeometry = node.geometry as? ARSCNFaceGeometry {
+            faceGeometry.update(from: faceAnchor.geometry)
+        }
         
         // Process facial landmarks for measurement
         if isMeasuring {

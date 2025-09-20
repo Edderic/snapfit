@@ -35,6 +35,7 @@ class MeasurementEngine {
         do {
             let measurements = landmarks.distances(between: customMeasurementPairs)
             
+            
             // Add to history
             addToHistory(measurements)
             

@@ -73,17 +73,21 @@ struct FacialLandmarks {
 /// Predefined landmark pairs for common facial measurements
 struct FacialMeasurementPairs {
     static let commonPairs: [(Int, Int)] = [
-        // Example pairs - you can specify your actual indices here
-        (14, 818),  // Example: bridge of nose to chin
-        (1, 2),     // Example: left eye corner to right eye corner
-        (3, 4),     // Example: left cheek to right cheek
-        // Add your specific landmark pairs here
+        // Start with basic pairs that are more likely to exist
+        (0, 1),     // First two landmarks
+        (1, 2),     // Second and third landmarks
+        (2, 3),     // Third and fourth landmarks
+        (0, 10),    // First and eleventh landmarks
+        (10, 20),   // Eleventh and twenty-first landmarks
+        // Add your specific landmark pairs here once you find valid indices
     ]
     
     static let pairDescriptions: [String: String] = [
-        "14-818": "Bridge of nose to chin",
-        "1-2": "Eye corner to eye corner",
-        "3-4": "Cheek to cheek",
+        "0-1": "Landmark 0 to 1",
+        "1-2": "Landmark 1 to 2", 
+        "2-3": "Landmark 2 to 3",
+        "0-10": "Landmark 0 to 10",
+        "10-20": "Landmark 10 to 20",
         // Add descriptions for your pairs
     ]
 }
