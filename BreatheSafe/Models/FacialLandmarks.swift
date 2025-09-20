@@ -22,7 +22,9 @@ struct FacialLandmarks {
         var landmarkDict: [Int: FacialLandmark] = [:]
         
         // Extract all available landmark indices from the face geometry
-        for i in 0..<faceGeometry.vertexCount {
+        // ARFaceGeometry.vertices is a buffer of SIMD3<Float> values
+        let vertexCount = faceGeometry.vertices.count
+        for i in 0..<vertexCount {
             let vertex = faceGeometry.vertices[i]
             landmarkDict[i] = FacialLandmark(index: i, position: vertex)
         }
