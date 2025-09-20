@@ -1,0 +1,13 @@
+# Xcode
+.DS_Store
+build/
+DerivedData/
+*.pbxuser
+xcuserdata/
+*~.nib
+Pods/
+Carthage/
+.swiftpm/
+*.lock
+.env
+.env.*
