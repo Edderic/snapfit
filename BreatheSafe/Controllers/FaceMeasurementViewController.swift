@@ -5,14 +5,14 @@ import SceneKit
 @available(iOS 13.0, *)
 class FaceMeasurementViewController: UIViewController {
     
-    // MARK: - IBOutlets
-    @IBOutlet weak var sceneView: ARSCNView!
-    @IBOutlet weak var instructionLabel: UILabel!
-    @IBOutlet weak var measurementLabel: UILabel!
-    @IBOutlet weak var startButton: UIButton!
-    @IBOutlet weak var exportButton: UIButton!
-    @IBOutlet weak var statusLabel: UILabel!
-    @IBOutlet weak var progressView: UIProgressView!
+    // MARK: - UI Elements
+    var sceneView: ARSCNView!
+    var instructionLabel: UILabel!
+    var measurementLabel: UITextView!
+    var startButton: UIButton!
+    var exportButton: UIButton!
+    var statusLabel: UILabel!
+    var progressView: UIProgressView!
     
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -42,36 +42,118 @@ class FaceMeasurementViewController: UIViewController {
     // MARK: - Setup Methods
     private func setupUI() {
         title = "Face Measurement"
+        view.backgroundColor = UIColor.systemBackground
         
-        // Configure instruction label
+        // Create ARSCNView
+        sceneView = ARSCNView()
+        sceneView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(sceneView)
+        
+        // Create instruction label
+        instructionLabel = UILabel()
         instructionLabel.text = "Position your face close to the camera (less than 12 inches away) in portrait mode. Remove glasses, hats, or anything covering your face."
         instructionLabel.numberOfLines = 0
         instructionLabel.textAlignment = .center
         instructionLabel.font = UIFont.systemFont(ofSize: 16)
+        instructionLabel.textColor = UIColor.label
+        instructionLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(instructionLabel)
         
-        // Configure measurement label
-        measurementLabel.text = "Measurements will appear here"
-        measurementLabel.numberOfLines = 0
-        measurementLabel.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .regular)
+        // Create progress view
+        progressView = UIProgressView(progressViewStyle: .default)
+        progressView.progress = 0.0
+        progressView.isHidden = true
+        progressView.progressTintColor = UIColor.systemBlue
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(progressView)
         
-        // Configure buttons
-        startButton.setTitle("Start Measurement", for: .normal)
-        startButton.backgroundColor = UIColor.systemBlue
-        startButton.layer.cornerRadius = 8
-        
-        exportButton.setTitle("Export Data", for: .normal)
-        exportButton.backgroundColor = UIColor.systemGreen
-        exportButton.layer.cornerRadius = 8
-        exportButton.isEnabled = false
-        
-        // Configure status label
+        // Create status label
+        statusLabel = UILabel()
         statusLabel.text = "Ready to start"
         statusLabel.textAlignment = .center
         statusLabel.font = UIFont.systemFont(ofSize: 14)
+        statusLabel.textColor = UIColor.secondaryLabel
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(statusLabel)
         
-        // Configure progress view
-        progressView.progress = 0.0
-        progressView.isHidden = true
+        // Create measurement label (using UITextView for better text display)
+        measurementLabel = UITextView()
+        measurementLabel.text = "Measurements will appear here"
+        measurementLabel.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .regular)
+        measurementLabel.backgroundColor = UIColor.systemBackground
+        measurementLabel.isEditable = false
+        measurementLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(measurementLabel)
+        
+        // Create start button
+        startButton = UIButton(type: .system)
+        startButton.setTitle("Start Measurement", for: .normal)
+        startButton.backgroundColor = UIColor.systemBlue
+        startButton.setTitleColor(UIColor.white, for: .normal)
+        startButton.layer.cornerRadius = 8
+        startButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        startButton.translatesAutoresizingMaskIntoConstraints = false
+        startButton.addTarget(self, action: #selector(startButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(startButton)
+        
+        // Create export button
+        exportButton = UIButton(type: .system)
+        exportButton.setTitle("Export Data", for: .normal)
+        exportButton.backgroundColor = UIColor.systemGreen
+        exportButton.setTitleColor(UIColor.white, for: .normal)
+        exportButton.layer.cornerRadius = 8
+        exportButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        exportButton.isEnabled = false
+        exportButton.translatesAutoresizingMaskIntoConstraints = false
+        exportButton.addTarget(self, action: #selector(exportButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(exportButton)
+        
+        // Set up constraints
+        setupConstraints()
+    }
+    
+    private func setupConstraints() {
+        NSLayoutConstraint.activate([
+            // ARSCNView fills the entire view
+            sceneView.topAnchor.constraint(equalTo: view.topAnchor),
+            sceneView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            sceneView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            sceneView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            // Instruction label
+            instructionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            instructionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            instructionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            // Progress view
+            progressView.topAnchor.constraint(equalTo: instructionLabel.bottomAnchor, constant: 16),
+            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            // Status label
+            statusLabel.topAnchor.constraint(equalTo: progressView.bottomAnchor, constant: 8),
+            statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            // Measurement label
+            measurementLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
+            measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            measurementLabel.heightAnchor.constraint(equalToConstant: 200),
+            
+            // Start button
+            startButton.topAnchor.constraint(equalTo: measurementLabel.bottomAnchor, constant: 16),
+            startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            startButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            // Export button
+            exportButton.topAnchor.constraint(equalTo: startButton.bottomAnchor, constant: 16),
+            exportButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            exportButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            exportButton.heightAnchor.constraint(equalToConstant: 50),
+            exportButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+        ])
     }
     
     private func setupARKit() {
@@ -112,7 +194,7 @@ class FaceMeasurementViewController: UIViewController {
     }
     
     // MARK: - Actions
-    @IBAction func startButtonTapped(_ sender: UIButton) {
+    @objc func startButtonTapped(_ sender: UIButton) {
         if isMeasuring {
             stopMeasurement()
         } else {
@@ -120,7 +202,7 @@ class FaceMeasurementViewController: UIViewController {
         }
     }
     
-    @IBAction func exportButtonTapped(_ sender: UIButton) {
+    @objc func exportButtonTapped(_ sender: UIButton) {
         exportData()
     }
     
