@@ -53,9 +53,16 @@ class DataExportManager {
     /// Export measurements to JSON format
     func exportToJSON(_ measurements: [String: Any]) -> String? {
         do {
+            // Validate that all values are JSON-serializable
+            guard JSONSerialization.isValidJSONObject(measurements) else {
+                print("Invalid JSON object: \(measurements)")
+                return nil
+            }
+            
             let jsonData = try JSONSerialization.data(withJSONObject: measurements, options: .prettyPrinted)
             return String(data: jsonData, encoding: .utf8)
         } catch {
+            print("JSON serialization error: \(error)")
             delegate?.dataExportManager(self, didEncounterError: error)
             return nil
         }

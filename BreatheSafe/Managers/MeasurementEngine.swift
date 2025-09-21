@@ -111,12 +111,53 @@ class MeasurementEngine {
         let averageMeasurements = getAverageMeasurements()
         let statistics = getMeasurementStatistics()
         
+        // Convert statistics to JSON-compatible format
+        var jsonStatistics: [String: [String: Any]] = [:]
+        for (key, stats) in statistics {
+            jsonStatistics[key] = [
+                "min": stats.min,
+                "max": stats.max,
+                "avg": stats.avg,
+                "count": stats.count
+            ]
+        }
+        
+        // Create measurement pairs with descriptions
+        let measurementPairsWithDescriptions = customMeasurementPairs.map { pair in
+            let key = "\(pair.0)-\(pair.1)"
+            let description = FacialMeasurementPairs.pairDescriptions[key] ?? "Landmark \(pair.0) to \(pair.1)"
+            return [
+                "from": pair.0,
+                "to": pair.1,
+                "description": description,
+                "key": key
+            ]
+        }
+        
+        // Create average measurements with descriptions
+        var averageMeasurementsWithDescriptions: [String: Any] = [:]
+        for (key, value) in averageMeasurements {
+            let description = FacialMeasurementPairs.pairDescriptions[key] ?? "Landmark \(key)"
+            averageMeasurementsWithDescriptions[key] = [
+                "value": value,
+                "description": description,
+                "value_mm": value * 1000,  // Convert to millimeters
+                "value_cm": value * 100   // Convert to centimeters
+            ]
+        }
+        
         return [
             "timestamp": Date().timeIntervalSince1970,
-            "average_measurements": averageMeasurements,
-            "statistics": statistics,
+            "average_measurements": averageMeasurementsWithDescriptions,
+            "statistics": jsonStatistics,
             "total_samples": measurementHistory.count,
-            "measurement_pairs": customMeasurementPairs.map { ["from": $0.0, "to": $0.1] }
+            "measurement_pairs": measurementPairsWithDescriptions,
+            "units": [
+                "primary": "meters",
+                "millimeters": "value * 1000",
+                "centimeters": "value * 100",
+                "inches": "value * 39.3701"
+            ]
         ]
     }
 }
