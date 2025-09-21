@@ -442,14 +442,22 @@ class FaceMeasurementViewController: UIViewController {
     private func performExport(_ measurements: [String: Any]) {
         let alert = UIAlertController(title: "Export Data", message: "Choose how to export your measurements", preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: "Share via System", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
             self.dataExportManager.shareMeasurements(measurements, from: self)
         })
         
-        alert.addAction(UIAlertAction(title: "Save to Files", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "Share CSV via System", style: .default) { _ in
+            self.shareCSVData(measurements)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Save JSON to Files", style: .default) { _ in
             if let fileURL = self.dataExportManager.saveToLocalFile(measurements) {
                 self.showSuccess("Data saved to: \(fileURL.lastPathComponent)")
             }
+        })
+        
+        alert.addAction(UIAlertAction(title: "Save CSV to Files", style: .default) { _ in
+            self.saveCSVToFiles(measurements)
         })
         
         alert.addAction(UIAlertAction(title: "Send to Server", style: .default) { _ in
@@ -470,14 +478,22 @@ class FaceMeasurementViewController: UIViewController {
     private func showLocalExportOptions(_ measurements: [String: Any]) {
         let alert = UIAlertController(title: "Export Data (Local Only)", message: "Your data will not be shared with external servers", preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: "Share via System", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
             self.dataExportManager.shareMeasurements(measurements, from: self)
         })
         
-        alert.addAction(UIAlertAction(title: "Save to Files", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "Share CSV via System", style: .default) { _ in
+            self.shareCSVData(measurements)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Save JSON to Files", style: .default) { _ in
             if let fileURL = self.dataExportManager.saveToLocalFile(measurements) {
                 self.showSuccess("Data saved to: \(fileURL.lastPathComponent)")
             }
+        })
+        
+        alert.addAction(UIAlertAction(title: "Save CSV to Files", style: .default) { _ in
+            self.saveCSVToFiles(measurements)
         })
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
@@ -504,6 +520,44 @@ class FaceMeasurementViewController: UIViewController {
                     self.showError("Failed to send data: \(error.localizedDescription)")
                 }
             }
+        }
+    }
+    
+    private func shareCSVData(_ measurements: [String: Any]) {
+        guard let csvString = dataExportManager.exportToCSV(measurements) else {
+            showError("Failed to generate CSV data")
+            return
+        }
+        
+        let activityViewController = UIActivityViewController(
+            activityItems: [csvString],
+            applicationActivities: nil
+        )
+        
+        // For iPad
+        if let popover = activityViewController.popoverPresentationController {
+            popover.sourceView = exportButton
+            popover.sourceRect = exportButton.bounds
+            popover.permittedArrowDirections = []
+        }
+        
+        present(activityViewController, animated: true)
+    }
+    
+    private func saveCSVToFiles(_ measurements: [String: Any]) {
+        guard let csvString = dataExportManager.exportToCSV(measurements) else {
+            showError("Failed to generate CSV data")
+            return
+        }
+        
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent("facial_measurements.csv")
+        
+        do {
+            try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+            showSuccess("CSV data saved to: \(fileURL.lastPathComponent)")
+        } catch {
+            showError("Failed to save CSV file: \(error.localizedDescription)")
         }
     }
     

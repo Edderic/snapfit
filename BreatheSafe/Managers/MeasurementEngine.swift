@@ -17,6 +17,9 @@ class MeasurementEngine {
     /// Measurement history for analysis
     private var measurementHistory: [[String: Float]] = []
     
+    /// Landmark coordinates history for analysis
+    private var landmarkCoordinatesHistory: [[String: [String: Float]]] = []
+    
     /// Maximum number of measurements to keep in history
     private let maxHistoryCount = 100
     
@@ -34,10 +37,11 @@ class MeasurementEngine {
     func processLandmarks(_ landmarks: FacialLandmarks) {
         do {
             let measurements = landmarks.distances(between: customMeasurementPairs)
-            
+            let coordinates = landmarks.exportCoordinates()
             
             // Add to history
             addToHistory(measurements)
+            addCoordinatesToHistory(coordinates)
             
             // Notify delegate
             delegate?.measurementEngine(self, didUpdateMeasurements: measurements)
@@ -54,6 +58,16 @@ class MeasurementEngine {
         // Keep only the most recent measurements
         if measurementHistory.count > maxHistoryCount {
             measurementHistory.removeFirst()
+        }
+    }
+    
+    /// Add landmark coordinates to history
+    private func addCoordinatesToHistory(_ coordinates: [String: [String: Float]]) {
+        landmarkCoordinatesHistory.append(coordinates)
+        
+        // Keep only the most recent coordinates
+        if landmarkCoordinatesHistory.count > maxHistoryCount {
+            landmarkCoordinatesHistory.removeFirst()
         }
     }
     
@@ -104,12 +118,44 @@ class MeasurementEngine {
     /// Clear measurement history
     func clearHistory() {
         measurementHistory.removeAll()
+        landmarkCoordinatesHistory.removeAll()
+    }
+    
+    /// Get average landmark coordinates from recent history
+    func getAverageLandmarkCoordinates(fromLast count: Int = 10) -> [String: [String: Float]] {
+        let recentCoordinates = Array(landmarkCoordinatesHistory.suffix(count))
+        
+        guard !recentCoordinates.isEmpty else {
+            return [:]
+        }
+        
+        var averageCoordinates: [String: [String: Float]] = [:]
+        
+        // Get all landmark indices
+        let allIndices = Set(recentCoordinates.flatMap { $0.keys })
+        
+        for index in allIndices {
+            let xValues = recentCoordinates.compactMap { $0[index]?["x"] }
+            let yValues = recentCoordinates.compactMap { $0[index]?["y"] }
+            let zValues = recentCoordinates.compactMap { $0[index]?["z"] }
+            
+            if !xValues.isEmpty && !yValues.isEmpty && !zValues.isEmpty {
+                averageCoordinates[index] = [
+                    "x": xValues.reduce(0, +) / Float(xValues.count),
+                    "y": yValues.reduce(0, +) / Float(yValues.count),
+                    "z": zValues.reduce(0, +) / Float(zValues.count)
+                ]
+            }
+        }
+        
+        return averageCoordinates
     }
     
     /// Export measurements for webapp integration
     func exportMeasurements() -> [String: Any] {
         let averageMeasurements = getAverageMeasurements()
         let statistics = getMeasurementStatistics()
+        let averageCoordinates = getAverageLandmarkCoordinates()
         
         // Convert statistics to JSON-compatible format
         var jsonStatistics: [String: [String: Any]] = [:]
@@ -146,9 +192,26 @@ class MeasurementEngine {
             ]
         }
         
+        // Create landmark coordinates with descriptions
+        var landmarkCoordinatesWithDescriptions: [String: Any] = [:]
+        for (index, coordinates) in averageCoordinates {
+            landmarkCoordinatesWithDescriptions[index] = [
+                "x": coordinates["x"] ?? 0,
+                "y": coordinates["y"] ?? 0,
+                "z": coordinates["z"] ?? 0,
+                "x_mm": (coordinates["x"] ?? 0) * 1000,  // Convert to millimeters
+                "y_mm": (coordinates["y"] ?? 0) * 1000,
+                "z_mm": (coordinates["z"] ?? 0) * 1000,
+                "x_cm": (coordinates["x"] ?? 0) * 100,   // Convert to centimeters
+                "y_cm": (coordinates["y"] ?? 0) * 100,
+                "z_cm": (coordinates["z"] ?? 0) * 100
+            ]
+        }
+        
         return [
             "timestamp": Date().timeIntervalSince1970,
             "average_measurements": averageMeasurementsWithDescriptions,
+            "landmark_coordinates": landmarkCoordinatesWithDescriptions,
             "statistics": jsonStatistics,
             "total_samples": measurementHistory.count,
             "measurement_pairs": measurementPairsWithDescriptions,

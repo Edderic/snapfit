@@ -134,15 +134,31 @@ class DataExportManager {
     
     /// Generate CSV format for measurements
     func exportToCSV(_ measurements: [String: Any]) -> String? {
-        guard let averageMeasurements = measurements["average_measurements"] as? [String: Float] else {
+        guard let averageMeasurements = measurements["average_measurements"] as? [String: Any] else {
             return nil
         }
         
-        var csv = "Measurement,Value\n"
+        var csv = "Type,Index,Description,Value,X,Y,Z,X_mm,Y_mm,Z_mm,X_cm,Y_cm,Z_cm\n"
         
-        for (key, value) in averageMeasurements {
-            let description = FacialMeasurementPairs.pairDescriptions[key] ?? key
-            csv += "\"\(description)\",\(value)\n"
+        // Add distance measurements
+        for (key, measurementData) in averageMeasurements {
+            if let measurementDict = measurementData as? [String: Any],
+               let value = measurementDict["value"] as? Float,
+               let description = measurementDict["description"] as? String {
+                csv += "\"Distance\",\"\(key)\",\"\(description)\",\(value),,,,\(value * 1000),,,\(value * 100),,\n"
+            }
+        }
+        
+        // Add landmark coordinates
+        if let landmarkCoordinates = measurements["landmark_coordinates"] as? [String: Any] {
+            for (index, coordinateData) in landmarkCoordinates {
+                if let coordDict = coordinateData as? [String: Any],
+                   let x = coordDict["x"] as? Float,
+                   let y = coordDict["y"] as? Float,
+                   let z = coordDict["z"] as? Float {
+                    csv += "\"Coordinate\",\"\(index)\",\"Landmark \(index)\",,\(x),\(y),\(z),\(x * 1000),\(y * 1000),\(z * 1000),\(x * 100),\(y * 100),\(z * 100)\n"
+                }
+            }
         }
         
         return csv

@@ -68,6 +68,38 @@ struct FacialLandmarks {
 
         return results
     }
+    
+    /// Export all landmark coordinates as a dictionary
+    func exportCoordinates() -> [String: [String: Float]] {
+        var coordinates: [String: [String: Float]] = [:]
+        
+        for (index, landmark) in landmarks {
+            coordinates["\(index)"] = [
+                "x": landmark.position.x,
+                "y": landmark.position.y,
+                "z": landmark.position.z
+            ]
+        }
+        
+        return coordinates
+    }
+    
+    /// Export coordinates for specific landmark indices
+    func exportCoordinates(for indices: [Int]) -> [String: [String: Float]] {
+        var coordinates: [String: [String: Float]] = [:]
+        
+        for index in indices {
+            if let landmark = landmarks[index] {
+                coordinates["\(index)"] = [
+                    "x": landmark.position.x,
+                    "y": landmark.position.y,
+                    "z": landmark.position.z
+                ]
+            }
+        }
+        
+        return coordinates
+    }
 }
 
 /// Predefined landmark pairs for common facial measurements
