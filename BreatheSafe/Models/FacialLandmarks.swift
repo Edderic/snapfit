@@ -73,17 +73,25 @@ struct FacialLandmarks {
 /// Predefined landmark pairs for common facial measurements
 struct FacialMeasurementPairs {
     static let commonPairs: [(Int, Int)] = [
-        (4, 38),
-        (38, 5),
-        (5, 37),
-        (37, 6),
-        (6, 7),
-        (458, 890),   // First two landmarks
+        (458, 1045),   // First two landmarks
         (15, 1049),   // First two landmarks
         (4, 7),   // First two landmarks
         (294, 589),   // First two landmarks
         (1049, 4),   // First two landmarks
         (638, 394),   // First two landmarks
+        (967, 464),
+        (464, 456),
+        (456, 451),
+        (451, 455),
+        (999, 1027),
+        (1027, 884),
+        (884, 883),
+        (883,879),
+        (4, 38),
+        (38, 5),
+        (5, 37),
+        (37, 6),
+        (6, 7),
         (1049, 983),   // First two landmarks
         (983, 982),   // First two landmarks
         (982, 1050),   // First two landmarks
@@ -132,17 +140,25 @@ struct FacialMeasurementPairs {
     ]
 
     static let pairDescriptions: [String: String] = [
-        "4-38": "nose protrusion 1",
-        "38-5": "nose protrusion 2",
-        "5-37": "nose protrusion 3",
-        "37-6": "nose protrusion 4",
-        "6-7": "nose protrusion 5",
-        "458-890": "face width",
+        "458-1045": "face width",
         "15-1049": "face length",
         "4-7": "nose protrusion",
         "294-589": "nose breadth",
         "1049-4": "lower face length",
         "638-394": "lip width",
+        "967-464": "left strap 4",
+        "464-456": "left strap 3",
+        "456-451": "left strap 2",
+        "451-455": "left strap 1",
+        "999-1027": "right strap 4",
+        "1027-884": "right strap 3",
+        "884-883": "right strap 2",
+        "883-879": "right strap 1",
+        "4-38": "nose protrusion 1",
+        "38-5": "nose protrusion 2",
+        "5-37": "nose protrusion 3",
+        "37-6": "nose protrusion 4",
+        "6-7": "nose protrusion 5",
         "1049-983": "chin right 7",
         "983-982": "chin right 6",
         "982-1050": "chin right 5",
