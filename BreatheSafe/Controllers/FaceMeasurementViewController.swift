@@ -21,6 +21,10 @@ class FaceMeasurementViewController: UIViewController {
     private var measurementCount = 0
     private let requiredMeasurements = 30 // Number of measurements to collect
     
+    // MARK: - Overlay Properties
+    private var landmarkNodes: [Int: SCNNode] = [:]
+    private var measurementLineNodes: [String: SCNNode] = [:]
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -170,6 +174,9 @@ class FaceMeasurementViewController: UIViewController {
         
         // Add face geometry visualization
         setupFaceGeometry()
+        
+        // Setup measurement overlays
+        setupMeasurementOverlays()
     }
     
     private func setupFaceGeometry() {
@@ -178,6 +185,159 @@ class FaceMeasurementViewController: UIViewController {
         let material = faceGeometry?.firstMaterial
         material?.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.3)
         material?.isDoubleSided = true
+    }
+    
+    private func setupMeasurementOverlays() {
+        // Create landmark point nodes for each measurement pair
+        let allIndices = Set(FacialMeasurementPairs.commonPairs.flatMap { [$0.0, $0.1] })
+        
+        for index in allIndices {
+            let pointNode = createLandmarkPointNode(index: index)
+            landmarkNodes[index] = pointNode
+        }
+        
+        // Create line nodes for each measurement pair
+        for (index1, index2) in FacialMeasurementPairs.commonPairs {
+            let lineNode = createMeasurementLineNode(from: index1, to: index2)
+            let key = "\(index1)-\(index2)"
+            measurementLineNodes[key] = lineNode
+        }
+    }
+    
+    private func createLandmarkPointNode(index: Int) -> SCNNode {
+        // Create a small white sphere for the landmark point
+        let sphere = SCNSphere(radius: 0.001) // 1mm radius
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.white
+        material.emission.contents = UIColor.white.withAlphaComponent(0.5)
+        sphere.materials = [material]
+        
+        let pointNode = SCNNode(geometry: sphere)
+        pointNode.name = "landmark_\(index)"
+        
+        // Add text label for the landmark index
+        let textGeometry = SCNText(string: "\(index)", extrusionDepth: 0.0001)
+        textGeometry.font = UIFont.systemFont(ofSize: 0.002)
+        textGeometry.firstMaterial?.diffuse.contents = UIColor.white
+        textGeometry.firstMaterial?.emission.contents = UIColor.white.withAlphaComponent(0.8)
+        
+        let textNode = SCNNode(geometry: textGeometry)
+        textNode.position = SCNVector3(0, 0.002, 0) // Position text above the point
+        pointNode.addChildNode(textNode)
+        
+        return pointNode
+    }
+    
+    private func createMeasurementLineNode(from index1: Int, to index2: Int) -> SCNNode {
+        // Create a red line between two landmarks
+        let lineGeometry = SCNCylinder(radius: 0.0002, height: 1.0) // 0.2mm radius
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.red
+        material.emission.contents = UIColor.red.withAlphaComponent(0.3)
+        lineGeometry.materials = [material]
+        
+        let lineNode = SCNNode(geometry: lineGeometry)
+        lineNode.name = "line_\(index1)_\(index2)"
+        
+        return lineNode
+    }
+    
+    private func addMeasurementOverlays(to faceNode: SCNNode, faceGeometry: ARFaceGeometry) {
+        // Add landmark point nodes
+        for (index, pointNode) in landmarkNodes {
+            if index < faceGeometry.vertices.count {
+                let vertex = faceGeometry.vertices[index]
+                pointNode.position = SCNVector3(vertex.x, vertex.y, vertex.z)
+                faceNode.addChildNode(pointNode)
+            }
+        }
+        
+        // Add measurement line nodes
+        for (key, lineNode) in measurementLineNodes {
+            let components = key.split(separator: "-")
+            if components.count == 2,
+               let index1 = Int(components[0]),
+               let index2 = Int(components[1]),
+               index1 < faceGeometry.vertices.count,
+               index2 < faceGeometry.vertices.count {
+                
+                let vertex1 = faceGeometry.vertices[index1]
+                let vertex2 = faceGeometry.vertices[index2]
+                
+                // Position the line between the two vertices
+                positionLineNode(lineNode, from: vertex1, to: vertex2)
+                faceNode.addChildNode(lineNode)
+            }
+        }
+    }
+    
+    private func positionLineNode(_ lineNode: SCNNode, from vertex1: SIMD3<Float>, to vertex2: SIMD3<Float>) {
+        // Calculate the midpoint
+        let midpoint = SIMD3<Float>(
+            (vertex1.x + vertex2.x) / 2,
+            (vertex1.y + vertex2.y) / 2,
+            (vertex1.z + vertex2.z) / 2
+        )
+        
+        // Calculate the distance between vertices
+        let distance = sqrt(
+            pow(vertex2.x - vertex1.x, 2) +
+            pow(vertex2.y - vertex1.y, 2) +
+            pow(vertex2.z - vertex1.z, 2)
+        )
+        
+        // Position the line at the midpoint
+        lineNode.position = SCNVector3(midpoint.x, midpoint.y, midpoint.z)
+        
+        // Scale the line to the correct length
+        lineNode.scale = SCNVector3(1, distance, 1)
+        
+        // Orient the line to point from vertex1 to vertex2
+        let direction = SIMD3<Float>(
+            vertex2.x - vertex1.x,
+            vertex2.y - vertex1.y,
+            vertex2.z - vertex1.z
+        )
+        
+        // Calculate rotation to align the line
+        let up = SIMD3<Float>(0, 1, 0)
+        let right = cross(up, direction)
+        let forward = cross(right, up)
+        
+        // Create rotation matrix
+        let rotationMatrix = simd_float4x4(
+            SIMD4<Float>(right.x, right.y, right.z, 0),
+            SIMD4<Float>(up.x, up.y, up.z, 0),
+            SIMD4<Float>(forward.x, forward.y, forward.z, 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        )
+        
+        lineNode.transform = SCNMatrix4(rotationMatrix)
+    }
+    
+    private func updateMeasurementOverlays(faceGeometry: ARFaceGeometry) {
+        // Update landmark point positions
+        for (index, pointNode) in landmarkNodes {
+            if index < faceGeometry.vertices.count {
+                let vertex = faceGeometry.vertices[index]
+                pointNode.position = SCNVector3(vertex.x, vertex.y, vertex.z)
+            }
+        }
+        
+        // Update measurement line positions
+        for (key, lineNode) in measurementLineNodes {
+            let components = key.split(separator: "-")
+            if components.count == 2,
+               let index1 = Int(components[0]),
+               let index2 = Int(components[1]),
+               index1 < faceGeometry.vertices.count,
+               index2 < faceGeometry.vertices.count {
+                
+                let vertex1 = faceGeometry.vertices[index1]
+                let vertex2 = faceGeometry.vertices[index2]
+                positionLineNode(lineNode, from: vertex1, to: vertex2)
+            }
+        }
     }
     
     private func setupDelegates() {
@@ -379,6 +539,9 @@ extension FaceMeasurementViewController: ARSCNViewDelegate {
         material?.isDoubleSided = true
         
         node.addChildNode(faceNode)
+        
+        // Add measurement overlays to the face node
+        addMeasurementOverlays(to: node, faceGeometry: faceAnchor.geometry)
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
@@ -388,6 +551,9 @@ extension FaceMeasurementViewController: ARSCNViewDelegate {
         if let faceGeometry = node.geometry as? ARSCNFaceGeometry {
             faceGeometry.update(from: faceAnchor.geometry)
         }
+        
+        // Update measurement overlays
+        updateMeasurementOverlays(faceGeometry: faceAnchor.geometry)
         
         // Process facial landmarks for measurement
         if isMeasuring {
