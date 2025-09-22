@@ -13,6 +13,7 @@ class FaceMeasurementViewController: UIViewController {
     var exportButton: UIButton!
     var statusLabel: UILabel!
     var progressView: UIProgressView!
+    var logoutButton: UIButton!
     
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -20,6 +21,12 @@ class FaceMeasurementViewController: UIViewController {
     private var isMeasuring = false
     private var measurementCount = 0
     private let requiredMeasurements = 30 // Number of measurements to collect
+    
+    // Authentication and API properties
+    var selectedUser: ManagedUser?
+    var authService: AuthenticationService?
+    var apiClient: APIClient?
+    var offlineSyncManager: OfflineSyncManager?
     
     // MARK: - Overlay Properties
     private var landmarkNodes: [Int: SCNNode] = [:]
@@ -45,7 +52,13 @@ class FaceMeasurementViewController: UIViewController {
     
     // MARK: - Setup Methods
     private func setupUI() {
-        title = "Face Measurement"
+        // Update title to show selected user
+        if let user = selectedUser {
+            let displayName = user.profile?.fullName ?? "User \(user.managedId)"
+            title = "Face Measurement - \(displayName)"
+        } else {
+            title = "Face Measurement"
+        }
         view.backgroundColor = UIColor.systemBackground
         
         // Create ARSCNView
@@ -112,6 +125,17 @@ class FaceMeasurementViewController: UIViewController {
         exportButton.addTarget(self, action: #selector(exportButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(exportButton)
         
+        // Create logout button
+        logoutButton = UIButton(type: .system)
+        logoutButton.setTitle("Logout", for: .normal)
+        logoutButton.backgroundColor = UIColor.systemRed
+        logoutButton.setTitleColor(UIColor.white, for: .normal)
+        logoutButton.layer.cornerRadius = 8
+        logoutButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        logoutButton.translatesAutoresizingMaskIntoConstraints = false
+        logoutButton.addTarget(self, action: #selector(logoutButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(logoutButton)
+        
         // Set up constraints
         setupConstraints()
     }
@@ -156,7 +180,13 @@ class FaceMeasurementViewController: UIViewController {
             exportButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             exportButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             exportButton.heightAnchor.constraint(equalToConstant: 50),
-            exportButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            
+            // Logout button
+            logoutButton.topAnchor.constraint(equalTo: exportButton.bottomAnchor, constant: 16),
+            logoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            logoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            logoutButton.heightAnchor.constraint(equalToConstant: 44),
+            logoutButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
     
@@ -366,6 +396,10 @@ class FaceMeasurementViewController: UIViewController {
         exportData()
     }
     
+    @objc func logoutButtonTapped(_ sender: UIButton) {
+        logout()
+    }
+    
     // MARK: - Measurement Control
     private func startMeasurement() {
         isMeasuring = true
@@ -442,6 +476,13 @@ class FaceMeasurementViewController: UIViewController {
     private func performExport(_ measurements: [String: Any]) {
         let alert = UIAlertController(title: "Export Data", message: "Choose how to export your measurements", preferredStyle: .actionSheet)
         
+        // Prioritize server export if authenticated
+        if authService?.isAuthenticated == true && selectedUser != nil {
+            alert.addAction(UIAlertAction(title: "Send to BreatheSafe Server", style: .default) { _ in
+                self.sendToServer(measurements)
+            })
+        }
+        
         alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
             self.dataExportManager.shareMeasurements(measurements, from: self)
         })
@@ -458,10 +499,6 @@ class FaceMeasurementViewController: UIViewController {
         
         alert.addAction(UIAlertAction(title: "Save CSV to Files", style: .default) { _ in
             self.saveCSVToFiles(measurements)
-        })
-        
-        alert.addAction(UIAlertAction(title: "Send to Server", style: .default) { _ in
-            self.sendToServer(measurements)
         })
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
@@ -508,19 +545,73 @@ class FaceMeasurementViewController: UIViewController {
     }
     
     private func sendToServer(_ measurements: [String: Any]) {
-        // You can set your webapp server URL here
-        dataExportManager.setServerURL("https://your-webapp-server.com/api/measurements")
+        guard let selectedUser = selectedUser,
+              let apiClient = apiClient else {
+            showError("No user selected or API client not available")
+            return
+        }
         
-        dataExportManager.sendToServer(measurements) { result in
+        // Check if user is authenticated
+        guard let authService = authService, authService.isAuthenticated else {
+            showError("User is not authenticated. Please login first.")
+            return
+        }
+        
+        // Export to Rails backend
+        apiClient.exportFacialMeasurements(measurements, for: selectedUser.managedId) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    self.showSuccess("Data sent to server successfully!")
+                    self?.showSuccess("Data sent to server successfully!")
                 case .failure(let error):
-                    self.showError("Failed to send data: \(error.localizedDescription)")
+                    self?.showError("Failed to send data: \(error.localizedDescription)")
+                    
+                    // If there's a network error, save offline
+                    if case APIError.networkError = error {
+                        self?.saveOffline(measurements)
+                    }
                 }
             }
         }
+    }
+    
+    private func saveOffline(_ measurements: [String: Any]) {
+        guard let selectedUser = selectedUser,
+              let offlineSyncManager = offlineSyncManager else {
+            return
+        }
+        
+        offlineSyncManager.saveMeasurementsOffline(measurements, for: selectedUser.managedId)
+        showSuccess("Data saved offline and will sync when connected")
+    }
+    
+    private func logout() {
+        guard let authService = authService else {
+            return
+        }
+        
+        let alert = UIAlertController(
+            title: "Logout",
+            message: "Are you sure you want to logout?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
+            authService.logout { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        // Dismiss the current view controller and return to login
+                        self?.dismiss(animated: true)
+                    case .failure(let error):
+                        self?.showError("Logout failed: \(error.localizedDescription)")
+                    }
+                }
+            }
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
     }
     
     private func shareCSVData(_ measurements: [String: Any]) {

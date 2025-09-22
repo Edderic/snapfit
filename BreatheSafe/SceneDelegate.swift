@@ -13,9 +13,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         
-        // Create the main view controller programmatically
-        let faceMeasurementVC = FaceMeasurementViewController()
-        let navigationController = UINavigationController(rootViewController: faceMeasurementVC)
+        // Create the login view controller as the initial screen
+        let loginVC = LoginViewController()
+        let navigationController = UINavigationController(rootViewController: loginVC)
         
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
