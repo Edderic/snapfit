@@ -138,14 +138,14 @@ class DataExportManager {
             return nil
         }
         
-        var csv = "Type,Index,Description,Value,X,Y,Z,X_mm,Y_mm,Z_mm,X_cm,Y_cm,Z_cm\n"
+        var csv = "Type,Index,Description,Value,X,Y,Z\n"
         
         // Add distance measurements
         for (key, measurementData) in averageMeasurements {
             if let measurementDict = measurementData as? [String: Any],
                let value = measurementDict["value"] as? Float,
                let description = measurementDict["description"] as? String {
-                csv += "\"Distance\",\"\(key)\",\"\(description)\",\(value),,,,\(value * 1000),,,\(value * 100),,\n"
+                csv += "\"Distance\",\"\(key)\",\"\(description)\",\(value),,,\n"
             }
         }
         
@@ -156,7 +156,7 @@ class DataExportManager {
                    let x = coordDict["x"] as? Float,
                    let y = coordDict["y"] as? Float,
                    let z = coordDict["z"] as? Float {
-                    csv += "\"Coordinate\",\"\(index)\",\"Landmark \(index)\",,\(x),\(y),\(z),\(x * 1000),\(y * 1000),\(z * 1000),\(x * 100),\(y * 100),\(z * 100)\n"
+                    csv += "\"Coordinate\",\"\(index)\",\"Landmark \(index)\",,\(x),\(y),\(z)\n"
                 }
             }
         }

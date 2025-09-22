@@ -185,10 +185,8 @@ class MeasurementEngine {
         for (key, value) in averageMeasurements {
             let description = FacialMeasurementPairs.pairDescriptions[key] ?? "Landmark \(key)"
             averageMeasurementsWithDescriptions[key] = [
-                "value": value,
-                "description": description,
-                "value_mm": value * 1000,  // Convert to millimeters
-                "value_cm": value * 100   // Convert to centimeters
+                "value": value * 1000,  // Convert to millimeters
+                "description": description
             ]
         }
         
@@ -196,15 +194,9 @@ class MeasurementEngine {
         var landmarkCoordinatesWithDescriptions: [String: Any] = [:]
         for (index, coordinates) in averageCoordinates {
             landmarkCoordinatesWithDescriptions[index] = [
-                "x": coordinates["x"] ?? 0,
-                "y": coordinates["y"] ?? 0,
-                "z": coordinates["z"] ?? 0,
-                "x_mm": (coordinates["x"] ?? 0) * 1000,  // Convert to millimeters
-                "y_mm": (coordinates["y"] ?? 0) * 1000,
-                "z_mm": (coordinates["z"] ?? 0) * 1000,
-                "x_cm": (coordinates["x"] ?? 0) * 100,   // Convert to centimeters
-                "y_cm": (coordinates["y"] ?? 0) * 100,
-                "z_cm": (coordinates["z"] ?? 0) * 100
+                "x": (coordinates["x"] ?? 0) * 1000,  // Convert to millimeters
+                "y": (coordinates["y"] ?? 0) * 1000,
+                "z": (coordinates["z"] ?? 0) * 1000
             ]
         }
         
@@ -216,10 +208,7 @@ class MeasurementEngine {
             "total_samples": measurementHistory.count,
             "measurement_pairs": measurementPairsWithDescriptions,
             "units": [
-                "primary": "meters",
-                "millimeters": "value * 1000",
-                "centimeters": "value * 100",
-                "inches": "value * 39.3701"
+                "primary": "millimeters"
             ]
         ]
     }
