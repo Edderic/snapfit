@@ -16,6 +16,12 @@
 		A1234567890123456789014A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014B /* Main.storyboard */; };
 		A1234567890123456789014C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014D /* Assets.xcassets */; };
 		A1234567890123456789014E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014F /* LaunchScreen.storyboard */; };
+		DA55553E2E823E4500757129 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55553D2E823E4500757129 /* User.swift */; };
+		DA5555442E823E8700757129 /* NetworkReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555412E823E8700757129 /* NetworkReachability.swift */; };
+		DA5555452E823E8700757129 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55553F2E823E8700757129 /* APIClient.swift */; };
+		DA5555462E823E8700757129 /* OfflineSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555422E823E8700757129 /* OfflineSyncManager.swift */; };
+		DA5555472E823E8700757129 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555402E823E8700757129 /* AuthenticationService.swift */; };
+		DA5555492E823EA800757129 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555482E823EA800757129 /* LoginViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +34,12 @@
 		A1234567890123456789014D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A1234567890123456789015A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1234567890123456789015B /* BreatheSafe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BreatheSafe.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA55553D2E823E4500757129 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		DA55553F2E823E8700757129 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		DA5555402E823E8700757129 /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
+		DA5555412E823E8700757129 /* NetworkReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachability.swift; sourceTree = "<group>"; };
+		DA5555422E823E8700757129 /* OfflineSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineSyncManager.swift; sourceTree = "<group>"; };
+		DA5555482E823EA800757129 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +64,7 @@
 		A1234567890123456789015E /* BreatheSafe */ = {
 			isa = PBXGroup;
 			children = (
+				DA5555432E823E8700757129 /* Services */,
 				A1234567890123456789012B /* AppDelegate.swift */,
 				A1234567890123456789012D /* SceneDelegate.swift */,
 				A1234567890123456789016A /* Controllers */,
@@ -77,6 +90,7 @@
 		A1234567890123456789016A /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				DA5555482E823EA800757129 /* LoginViewController.swift */,
 				A1234567890123456789012F /* FaceMeasurementViewController.swift */,
 			);
 			path = Controllers;
@@ -85,6 +99,7 @@
 		A1234567890123456789016B /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				DA55553D2E823E4500757129 /* User.swift */,
 				A1234567890123456789013D /* FacialLandmarks.swift */,
 			);
 			path = Models;
@@ -104,6 +119,17 @@
 				A1234567890123456789013F /* DataExportManager.swift */,
 			);
 			path = Managers;
+			sourceTree = "<group>";
+		};
+		DA5555432E823E8700757129 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				DA55553F2E823E8700757129 /* APIClient.swift */,
+				DA5555402E823E8700757129 /* AuthenticationService.swift */,
+				DA5555412E823E8700757129 /* NetworkReachability.swift */,
+				DA5555422E823E8700757129 /* OfflineSyncManager.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -177,12 +203,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA5555492E823EA800757129 /* LoginViewController.swift in Sources */,
 				A1234567890123456789012E /* FaceMeasurementViewController.swift in Sources */,
 				A1234567890123456789013A /* MeasurementEngine.swift in Sources */,
 				A1234567890123456789013C /* FacialLandmarks.swift in Sources */,
 				A1234567890123456789013E /* DataExportManager.swift in Sources */,
 				A1234567890123456789012A /* AppDelegate.swift in Sources */,
 				A1234567890123456789012C /* SceneDelegate.swift in Sources */,
+				DA55553E2E823E4500757129 /* User.swift in Sources */,
+				DA5555442E823E8700757129 /* NetworkReachability.swift in Sources */,
+				DA5555452E823E8700757129 /* APIClient.swift in Sources */,
+				DA5555462E823E8700757129 /* OfflineSyncManager.swift in Sources */,
+				DA5555472E823E8700757129 /* AuthenticationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

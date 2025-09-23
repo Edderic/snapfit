@@ -17,11 +17,17 @@ struct User: Codable {
 
 /// Represents a managed user (someone managed by the current user)
 struct ManagedUser: Codable {
-    let id: Int
-    let managerId: Int
-    let managedId: Int
-    let user: User
+    let id: Int?
+    let managerId: Int?
+    let managedId: Int?
+    let user: User?
     let profile: UserProfile?
+    
+    // Additional fields that might be present in the complex response
+    let managerEmail: String?
+    let firstName: String?
+    let lastName: String?
+    let email: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -29,6 +35,23 @@ struct ManagedUser: Codable {
         case managedId = "managed_id"
         case user
         case profile
+        case managerEmail = "manager_email"
+        case firstName = "first_name"
+        case lastName = "last_name"
+        case email
+    }
+    
+    /// Get display name for the managed user
+    var displayName: String {
+        if let firstName = firstName, let lastName = lastName {
+            return "\(firstName) \(lastName)"
+        } else if let email = email {
+            return email
+        } else if let user = user {
+            return user.email
+        } else {
+            return "User \(managedId ?? 0)"
+        }
     }
 }
 
@@ -56,7 +79,7 @@ struct UserProfile: Codable {
 /// Authentication response from the server
 struct AuthResponse: Codable {
     let currentUser: User?
-    let messages: [String]
+    let messages: [String]?
     let updateSignedIn: Bool?
     
     enum CodingKeys: String, CodingKey {

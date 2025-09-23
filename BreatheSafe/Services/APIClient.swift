@@ -11,7 +11,7 @@ class APIClient {
     weak var delegate: APIClientDelegate?
     
     /// Base URL for the Rails backend
-    private let baseURL = "https://breathesafe.xyz"
+    private let baseURL = "https://www.breathesafe.xyz"
     
     /// URLSession for network requests
     private let urlSession: URLSession

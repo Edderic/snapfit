@@ -10,13 +10,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // If using a storyboard, the `window` property will automatically be set and attached to the scene.
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        
+
         window = UIWindow(windowScene: windowScene)
-        
-        // Create the login view controller as the initial screen
+
+        // Create the main view controller programmatically
+        // TODO: Replace with LoginViewController once it's added to the project
+        // let faceMeasurementVC = FaceMeasurementViewController()
         let loginVC = LoginViewController()
         let navigationController = UINavigationController(rootViewController: loginVC)
-        
+
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
     }

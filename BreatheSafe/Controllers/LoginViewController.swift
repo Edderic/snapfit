@@ -168,6 +168,10 @@ class LoginViewController: UIViewController {
         setLoading(true)
         hideError()
         
+        // Add some debugging
+        print("Attempting login with email: \(email)")
+        print("Using endpoint: https://www.breathesafe.xyz/users/log_in")
+        
         authService.login(email: email, password: password) { [weak self] result in
             DispatchQueue.main.async {
                 self?.setLoading(false)
@@ -177,7 +181,8 @@ class LoginViewController: UIViewController {
                     print("Successfully logged in as: \(user.email)")
                     self?.loadManagedUsers()
                 case .failure(let error):
-                    self?.showError(error.localizedDescription)
+                    print("Login failed with error: \(error)")
+                    self?.showError("Login failed: \(error.localizedDescription)")
                 }
             }
         }
@@ -188,6 +193,7 @@ class LoginViewController: UIViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let users):
+                    print("Successfully loaded \(users.count) managed users")
                     self?.managedUsers = users
                     self?.updateManagedUsersButton()
                 case .failure(let error):
@@ -210,8 +216,7 @@ class LoginViewController: UIViewController {
         let alert = UIAlertController(title: "Select User", message: "Choose a user to capture measurements for:", preferredStyle: .actionSheet)
         
         for user in managedUsers {
-            let displayName = user.profile?.fullName ?? "User \(user.managedId)"
-            alert.addAction(UIAlertAction(title: displayName, style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: user.displayName, style: .default) { [weak self] _ in
                 self?.navigateToFaceMeasurement(for: user)
             })
         }

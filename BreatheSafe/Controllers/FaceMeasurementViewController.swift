@@ -4,7 +4,7 @@ import SceneKit
 
 @available(iOS 13.0, *)
 class FaceMeasurementViewController: UIViewController {
-    
+
     // MARK: - UI Elements
     var sceneView: ARSCNView!
     var instructionLabel: UILabel!
@@ -14,24 +14,25 @@ class FaceMeasurementViewController: UIViewController {
     var statusLabel: UILabel!
     var progressView: UIProgressView!
     var logoutButton: UIButton!
-    
+
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
     private let dataExportManager = DataExportManager()
     private var isMeasuring = false
     private var measurementCount = 0
     private let requiredMeasurements = 30 // Number of measurements to collect
-    
+
     // Authentication and API properties
+    // TODO: Uncomment these once the new model files are added to the Xcode project
     var selectedUser: ManagedUser?
     var authService: AuthenticationService?
     var apiClient: APIClient?
     var offlineSyncManager: OfflineSyncManager?
-    
+
     // MARK: - Overlay Properties
     private var landmarkNodes: [Int: SCNNode] = [:]
     private var measurementLineNodes: [String: SCNNode] = [:]
-    
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,33 +40,32 @@ class FaceMeasurementViewController: UIViewController {
         setupARKit()
         setupDelegates()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         startARSession()
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
     }
-    
+
     // MARK: - Setup Methods
     private func setupUI() {
         // Update title to show selected user
         if let user = selectedUser {
-            let displayName = user.profile?.fullName ?? "User \(user.managedId)"
-            title = "Face Measurement - \(displayName)"
+            title = "Face Measurement - \(user.displayName)"
         } else {
             title = "Face Measurement"
         }
         view.backgroundColor = UIColor.systemBackground
-        
+
         // Create ARSCNView
         sceneView = ARSCNView()
         sceneView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(sceneView)
-        
+
         // Create instruction label
         instructionLabel = UILabel()
         instructionLabel.text = "Position your face close to the camera (less than 12 inches away) in portrait mode. Remove glasses, hats, or anything covering your face."
@@ -75,7 +75,7 @@ class FaceMeasurementViewController: UIViewController {
         instructionLabel.textColor = UIColor.label
         instructionLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(instructionLabel)
-        
+
         // Create progress view
         progressView = UIProgressView(progressViewStyle: .default)
         progressView.progress = 0.0
@@ -83,7 +83,7 @@ class FaceMeasurementViewController: UIViewController {
         progressView.progressTintColor = UIColor.systemBlue
         progressView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(progressView)
-        
+
         // Create status label
         statusLabel = UILabel()
         statusLabel.text = "Ready to start"
@@ -92,7 +92,7 @@ class FaceMeasurementViewController: UIViewController {
         statusLabel.textColor = UIColor.secondaryLabel
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(statusLabel)
-        
+
         // Create measurement label (using UITextView for better text display)
         measurementLabel = UITextView()
         measurementLabel.text = "Measurements will appear here"
@@ -101,7 +101,7 @@ class FaceMeasurementViewController: UIViewController {
         measurementLabel.isEditable = false
         measurementLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(measurementLabel)
-        
+
         // Create start button
         startButton = UIButton(type: .system)
         startButton.setTitle("Start Measurement", for: .normal)
@@ -112,7 +112,7 @@ class FaceMeasurementViewController: UIViewController {
         startButton.translatesAutoresizingMaskIntoConstraints = false
         startButton.addTarget(self, action: #selector(startButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(startButton)
-        
+
         // Create export button
         exportButton = UIButton(type: .system)
         exportButton.setTitle("Export Data", for: .normal)
@@ -124,7 +124,7 @@ class FaceMeasurementViewController: UIViewController {
         exportButton.translatesAutoresizingMaskIntoConstraints = false
         exportButton.addTarget(self, action: #selector(exportButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(exportButton)
-        
+
         // Create logout button
         logoutButton = UIButton(type: .system)
         logoutButton.setTitle("Logout", for: .normal)
@@ -135,11 +135,11 @@ class FaceMeasurementViewController: UIViewController {
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
         logoutButton.addTarget(self, action: #selector(logoutButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(logoutButton)
-        
+
         // Set up constraints
         setupConstraints()
     }
-    
+
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // ARSCNView fills the entire view
@@ -147,40 +147,40 @@ class FaceMeasurementViewController: UIViewController {
             sceneView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             sceneView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             sceneView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
+
             // Instruction label
             instructionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             instructionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             instructionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
+
             // Progress view
             progressView.topAnchor.constraint(equalTo: instructionLabel.bottomAnchor, constant: 16),
             progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
+
             // Status label
             statusLabel.topAnchor.constraint(equalTo: progressView.bottomAnchor, constant: 8),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
+
             // Measurement label
             measurementLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
             measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             measurementLabel.heightAnchor.constraint(equalToConstant: 200),
-            
+
             // Start button
             startButton.topAnchor.constraint(equalTo: measurementLabel.bottomAnchor, constant: 16),
             startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             startButton.heightAnchor.constraint(equalToConstant: 50),
-            
+
             // Export button
             exportButton.topAnchor.constraint(equalTo: startButton.bottomAnchor, constant: 16),
             exportButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             exportButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             exportButton.heightAnchor.constraint(equalToConstant: 50),
-            
+
             // Logout button
             logoutButton.topAnchor.constraint(equalTo: exportButton.bottomAnchor, constant: 16),
             logoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -189,26 +189,26 @@ class FaceMeasurementViewController: UIViewController {
             logoutButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
-    
+
     private func setupARKit() {
         // Check if device supports ARKit and True Depth
         guard ARFaceTrackingConfiguration.isSupported else {
             showError("ARKit face tracking is not supported on this device")
             return
         }
-        
+
         // Configure ARSCNView
         sceneView.delegate = self
         sceneView.session.delegate = self
         sceneView.automaticallyUpdatesLighting = true
-        
+
         // Add face geometry visualization
         setupFaceGeometry()
-        
+
         // Setup measurement overlays
         setupMeasurementOverlays()
     }
-    
+
     private func setupFaceGeometry() {
         // Create a simple face geometry visualization
         let faceGeometry = ARSCNFaceGeometry(device: sceneView.device!)
@@ -216,16 +216,16 @@ class FaceMeasurementViewController: UIViewController {
         material?.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.3)
         material?.isDoubleSided = true
     }
-    
+
     private func setupMeasurementOverlays() {
         // Create landmark point nodes for each measurement pair
         let allIndices = Set(FacialMeasurementPairs.commonPairs.flatMap { [$0.0, $0.1] })
-        
+
         for index in allIndices {
             let pointNode = createLandmarkPointNode(index: index)
             landmarkNodes[index] = pointNode
         }
-        
+
         // Create line nodes for each measurement pair
         for (index1, index2) in FacialMeasurementPairs.commonPairs {
             let lineNode = createMeasurementLineNode(from: index1, to: index2)
@@ -233,7 +233,7 @@ class FaceMeasurementViewController: UIViewController {
             measurementLineNodes[key] = lineNode
         }
     }
-    
+
     private func createLandmarkPointNode(index: Int) -> SCNNode {
         // Create a small white sphere for the landmark point
         let sphere = SCNSphere(radius: 0.001) // 1mm radius
@@ -241,23 +241,23 @@ class FaceMeasurementViewController: UIViewController {
         material.diffuse.contents = UIColor.white
         material.emission.contents = UIColor.white.withAlphaComponent(0.5)
         sphere.materials = [material]
-        
+
         let pointNode = SCNNode(geometry: sphere)
         pointNode.name = "landmark_\(index)"
-        
+
         // Add text label for the landmark index
         let textGeometry = SCNText(string: "\(index)", extrusionDepth: 0.0001)
         textGeometry.font = UIFont.systemFont(ofSize: 0.002)
         textGeometry.firstMaterial?.diffuse.contents = UIColor.white
         textGeometry.firstMaterial?.emission.contents = UIColor.white.withAlphaComponent(0.8)
-        
+
         let textNode = SCNNode(geometry: textGeometry)
         textNode.position = SCNVector3(0, 0.002, 0) // Position text above the point
         pointNode.addChildNode(textNode)
-        
+
         return pointNode
     }
-    
+
     private func createMeasurementLineNode(from index1: Int, to index2: Int) -> SCNNode {
         // Create a red line between two landmarks
         let lineGeometry = SCNCylinder(radius: 0.0002, height: 1.0) // 0.2mm radius
@@ -265,13 +265,13 @@ class FaceMeasurementViewController: UIViewController {
         material.diffuse.contents = UIColor.red
         material.emission.contents = UIColor.red.withAlphaComponent(0.3)
         lineGeometry.materials = [material]
-        
+
         let lineNode = SCNNode(geometry: lineGeometry)
         lineNode.name = "line_\(index1)_\(index2)"
-        
+
         return lineNode
     }
-    
+
     private func addMeasurementOverlays(to faceNode: SCNNode, faceGeometry: ARFaceGeometry) {
         // Add landmark point nodes
         for (index, pointNode) in landmarkNodes {
@@ -281,7 +281,7 @@ class FaceMeasurementViewController: UIViewController {
                 faceNode.addChildNode(pointNode)
             }
         }
-        
+
         // Add measurement line nodes
         for (key, lineNode) in measurementLineNodes {
             let components = key.split(separator: "-")
@@ -290,17 +290,17 @@ class FaceMeasurementViewController: UIViewController {
                let index2 = Int(components[1]),
                index1 < faceGeometry.vertices.count,
                index2 < faceGeometry.vertices.count {
-                
+
                 let vertex1 = faceGeometry.vertices[index1]
                 let vertex2 = faceGeometry.vertices[index2]
-                
+
                 // Position the line between the two vertices
                 positionLineNode(lineNode, from: vertex1, to: vertex2)
                 faceNode.addChildNode(lineNode)
             }
         }
     }
-    
+
     private func positionLineNode(_ lineNode: SCNNode, from vertex1: SIMD3<Float>, to vertex2: SIMD3<Float>) {
         // Calculate the midpoint
         let midpoint = SIMD3<Float>(
@@ -308,32 +308,32 @@ class FaceMeasurementViewController: UIViewController {
             (vertex1.y + vertex2.y) / 2,
             (vertex1.z + vertex2.z) / 2
         )
-        
+
         // Calculate the distance between vertices
         let distance = sqrt(
             pow(vertex2.x - vertex1.x, 2) +
             pow(vertex2.y - vertex1.y, 2) +
             pow(vertex2.z - vertex1.z, 2)
         )
-        
+
         // Position the line at the midpoint
         lineNode.position = SCNVector3(midpoint.x, midpoint.y, midpoint.z)
-        
+
         // Scale the line to the correct length
         lineNode.scale = SCNVector3(1, distance, 1)
-        
+
         // Orient the line to point from vertex1 to vertex2
         let direction = SIMD3<Float>(
             vertex2.x - vertex1.x,
             vertex2.y - vertex1.y,
             vertex2.z - vertex1.z
         )
-        
+
         // Calculate rotation to align the line
         let up = SIMD3<Float>(0, 1, 0)
         let right = cross(up, direction)
         let forward = cross(right, up)
-        
+
         // Create rotation matrix
         let rotationMatrix = simd_float4x4(
             SIMD4<Float>(right.x, right.y, right.z, 0),
@@ -341,10 +341,10 @@ class FaceMeasurementViewController: UIViewController {
             SIMD4<Float>(forward.x, forward.y, forward.z, 0),
             SIMD4<Float>(0, 0, 0, 1)
         )
-        
+
         lineNode.transform = SCNMatrix4(rotationMatrix)
     }
-    
+
     private func updateMeasurementOverlays(faceGeometry: ARFaceGeometry) {
         // Update landmark point positions
         for (index, pointNode) in landmarkNodes {
@@ -353,7 +353,7 @@ class FaceMeasurementViewController: UIViewController {
                 pointNode.position = SCNVector3(vertex.x, vertex.y, vertex.z)
             }
         }
-        
+
         // Update measurement line positions
         for (key, lineNode) in measurementLineNodes {
             let components = key.split(separator: "-")
@@ -362,27 +362,27 @@ class FaceMeasurementViewController: UIViewController {
                let index2 = Int(components[1]),
                index1 < faceGeometry.vertices.count,
                index2 < faceGeometry.vertices.count {
-                
+
                 let vertex1 = faceGeometry.vertices[index1]
                 let vertex2 = faceGeometry.vertices[index2]
                 positionLineNode(lineNode, from: vertex1, to: vertex2)
             }
         }
     }
-    
+
     private func setupDelegates() {
         measurementEngine.delegate = self
         dataExportManager.delegate = self
     }
-    
+
     private func startARSession() {
         let configuration = ARFaceTrackingConfiguration()
         configuration.isLightEstimationEnabled = true
         configuration.maximumNumberOfTrackedFaces = 1
-        
+
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
-    
+
     // MARK: - Actions
     @objc func startButtonTapped(_ sender: UIButton) {
         if isMeasuring {
@@ -391,74 +391,74 @@ class FaceMeasurementViewController: UIViewController {
             startMeasurement()
         }
     }
-    
+
     @objc func exportButtonTapped(_ sender: UIButton) {
         exportData()
     }
-    
+
     @objc func logoutButtonTapped(_ sender: UIButton) {
         logout()
     }
-    
+
     // MARK: - Measurement Control
     private func startMeasurement() {
         isMeasuring = true
         measurementCount = 0
         measurementEngine.clearHistory()
-        
-        
+
+
         startButton.setTitle("Stop Measurement", for: .normal)
         startButton.backgroundColor = UIColor.systemRed
         exportButton.isEnabled = false
         progressView.isHidden = false
         progressView.progress = 0.0
-        
+
         instructionLabel.text = "Keep your face steady and centered in the camera view. Measurements are being collected..."
         statusLabel.text = "Collecting measurements..."
-        
+
         // Update UI to show measurement is active
         UIView.animate(withDuration: 0.3) {
             self.view.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
         }
     }
-    
+
     private func stopMeasurement() {
         isMeasuring = false
-        
+
         startButton.setTitle("Start Measurement", for: .normal)
         startButton.backgroundColor = UIColor.systemBlue
         exportButton.isEnabled = true
         progressView.isHidden = true
-        
+
         instructionLabel.text = "Measurement complete! You can now export your data."
         statusLabel.text = "Measurement complete"
-        
+
         // Reset background color
         UIView.animate(withDuration: 0.3) {
             self.view.backgroundColor = UIColor.systemBackground
         }
-        
+
         // Show final measurements
         let averageMeasurements = measurementEngine.getAverageMeasurements()
         displayMeasurements(averageMeasurements)
     }
-    
+
     // MARK: - Data Display
     private func displayMeasurements(_ measurements: [String: Float]) {
         var measurementText = "Average Measurements:\n\n"
-        
+
         for (key, value) in measurements.sorted(by: { $0.key < $1.key }) {
             let description = FacialMeasurementPairs.pairDescriptions[key] ?? key
             measurementText += "\(description): \(String(format: "%.3f", value))\n"
         }
-        
+
         measurementLabel.text = measurementText
     }
-    
+
     // MARK: - Data Export
     private func exportData() {
         let measurements = measurementEngine.exportMeasurements()
-        
+
         // Request user consent if not already given
         if !dataExportManager.hasUserConsent {
             dataExportManager.requestUserConsent(from: self) { [weak self] consented in
@@ -472,100 +472,107 @@ class FaceMeasurementViewController: UIViewController {
             performExport(measurements)
         }
     }
-    
+
     private func performExport(_ measurements: [String: Any]) {
         let alert = UIAlertController(title: "Export Data", message: "Choose how to export your measurements", preferredStyle: .actionSheet)
-        
+
         // Prioritize server export if authenticated
+        // TODO: Uncomment this once the new model files are added to the Xcode project
         if authService?.isAuthenticated == true && selectedUser != nil {
             alert.addAction(UIAlertAction(title: "Send to BreatheSafe Server", style: .default) { _ in
                 self.sendToServer(measurements)
             })
         }
-        
+
+        // Temporary: Always show server export option
+        alert.addAction(UIAlertAction(title: "Send to BreatheSafe Server", style: .default) { _ in
+            self.sendToServer(measurements)
+        })
+
         alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
             self.dataExportManager.shareMeasurements(measurements, from: self)
         })
-        
+
         alert.addAction(UIAlertAction(title: "Share CSV via System", style: .default) { _ in
             self.shareCSVData(measurements)
         })
-        
+
         alert.addAction(UIAlertAction(title: "Save JSON to Files", style: .default) { _ in
             if let fileURL = self.dataExportManager.saveToLocalFile(measurements) {
                 self.showSuccess("Data saved to: \(fileURL.lastPathComponent)")
             }
         })
-        
+
         alert.addAction(UIAlertAction(title: "Save CSV to Files", style: .default) { _ in
             self.saveCSVToFiles(measurements)
         })
-        
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
+
         // For iPad
         if let popover = alert.popoverPresentationController {
             popover.sourceView = exportButton
             popover.sourceRect = exportButton.bounds
         }
-        
+
         present(alert, animated: true)
     }
-    
+
     private func showLocalExportOptions(_ measurements: [String: Any]) {
         let alert = UIAlertController(title: "Export Data (Local Only)", message: "Your data will not be shared with external servers", preferredStyle: .actionSheet)
-        
+
         alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
             self.dataExportManager.shareMeasurements(measurements, from: self)
         })
-        
+
         alert.addAction(UIAlertAction(title: "Share CSV via System", style: .default) { _ in
             self.shareCSVData(measurements)
         })
-        
+
         alert.addAction(UIAlertAction(title: "Save JSON to Files", style: .default) { _ in
             if let fileURL = self.dataExportManager.saveToLocalFile(measurements) {
                 self.showSuccess("Data saved to: \(fileURL.lastPathComponent)")
             }
         })
-        
+
         alert.addAction(UIAlertAction(title: "Save CSV to Files", style: .default) { _ in
             self.saveCSVToFiles(measurements)
         })
-        
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
+
         // For iPad
         if let popover = alert.popoverPresentationController {
             popover.sourceView = exportButton
             popover.sourceRect = exportButton.bounds
         }
-        
+
         present(alert, animated: true)
     }
-    
+
     private func sendToServer(_ measurements: [String: Any]) {
+        // TODO: Uncomment this once the new model files are added to the Xcode project
         guard let selectedUser = selectedUser,
               let apiClient = apiClient else {
             showError("No user selected or API client not available")
             return
         }
-        
-        // Check if user is authenticated
+
+        // // Check if user is authenticated
         guard let authService = authService, authService.isAuthenticated else {
             showError("User is not authenticated. Please login first.")
             return
         }
-        
+
         // Export to Rails backend
-        apiClient.exportFacialMeasurements(measurements, for: selectedUser.managedId) { [weak self] result in
+        apiClient.exportFacialMeasurements(measurements, for: selectedUser.managedId ?? 0) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
                     self?.showSuccess("Data sent to server successfully!")
                 case .failure(let error):
                     self?.showError("Failed to send data: \(error.localizedDescription)")
-                    
+
                     // If there's a network error, save offline
                     if case APIError.networkError = error {
                         self?.saveOffline(measurements)
@@ -573,29 +580,44 @@ class FaceMeasurementViewController: UIViewController {
                 }
             }
         }
+
+        // Temporary fallback to original functionality
+        dataExportManager.setServerURL("https://breathesafe.xyz/users/1/facial_measurements_from_arkit")
+
+        dataExportManager.sendToServer(measurements) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    self.showSuccess("Data sent to server successfully!")
+                case .failure(let error):
+                    self.showError("Failed to send data: \(error.localizedDescription)")
+                }
+            }
+        }
     }
-    
+
+    // TODO: Uncomment these methods once the new model files are added to the Xcode project
     private func saveOffline(_ measurements: [String: Any]) {
         guard let selectedUser = selectedUser,
               let offlineSyncManager = offlineSyncManager else {
             return
         }
-        
-        offlineSyncManager.saveMeasurementsOffline(measurements, for: selectedUser.managedId)
+
+        offlineSyncManager.saveMeasurementsOffline(measurements, for: selectedUser.managedId ?? 0)
         showSuccess("Data saved offline and will sync when connected")
     }
-    
+
     private func logout() {
         guard let authService = authService else {
             return
         }
-        
+
         let alert = UIAlertController(
             title: "Logout",
             message: "Are you sure you want to logout?",
             preferredStyle: .alert
         )
-        
+
         alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
             authService.logout { result in
                 DispatchQueue.main.async {
@@ -609,41 +631,41 @@ class FaceMeasurementViewController: UIViewController {
                 }
             }
         })
-        
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(alert, animated: true)
     }
-    
+
     private func shareCSVData(_ measurements: [String: Any]) {
         guard let csvString = dataExportManager.exportToCSV(measurements) else {
             showError("Failed to generate CSV data")
             return
         }
-        
+
         let activityViewController = UIActivityViewController(
             activityItems: [csvString],
             applicationActivities: nil
         )
-        
+
         // For iPad
         if let popover = activityViewController.popoverPresentationController {
             popover.sourceView = exportButton
             popover.sourceRect = exportButton.bounds
             popover.permittedArrowDirections = []
         }
-        
+
         present(activityViewController, animated: true)
     }
-    
+
     private func saveCSVToFiles(_ measurements: [String: Any]) {
         guard let csvString = dataExportManager.exportToCSV(measurements) else {
             showError("Failed to generate CSV data")
             return
         }
-        
+
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileURL = documentsPath.appendingPathComponent("facial_measurements.csv")
-        
+
         do {
             try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
             showSuccess("CSV data saved to: \(fileURL.lastPathComponent)")
@@ -651,14 +673,14 @@ class FaceMeasurementViewController: UIViewController {
             showError("Failed to save CSV file: \(error.localizedDescription)")
         }
     }
-    
+
     // MARK: - Helper Methods
     private func showError(_ message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
-    
+
     private func showSuccess(_ message: String) {
         let alert = UIAlertController(title: "Success", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -670,36 +692,36 @@ class FaceMeasurementViewController: UIViewController {
 extension FaceMeasurementViewController: ARSCNViewDelegate {
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         guard let faceAnchor = anchor as? ARFaceAnchor else { return }
-        
+
         // Create face geometry visualization
         guard let device = sceneView.device else {
             return
         }
-        
+
         let faceGeometry = ARSCNFaceGeometry(device: device)
         let faceNode = SCNNode(geometry: faceGeometry)
-        
+
         let material = faceGeometry?.firstMaterial
         material?.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.3)
         material?.isDoubleSided = true
-        
+
         node.addChildNode(faceNode)
-        
+
         // Add measurement overlays to the face node
         addMeasurementOverlays(to: node, faceGeometry: faceAnchor.geometry)
     }
-    
+
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         guard let faceAnchor = anchor as? ARFaceAnchor else { return }
-        
+
         // Update the face geometry visualization if it exists
         if let faceGeometry = node.geometry as? ARSCNFaceGeometry {
             faceGeometry.update(from: faceAnchor.geometry)
         }
-        
+
         // Update measurement overlays
         updateMeasurementOverlays(faceGeometry: faceAnchor.geometry)
-        
+
         // Process facial landmarks for measurement
         if isMeasuring {
             let landmarks = FacialLandmarks(from: faceAnchor.geometry, timestamp: CACurrentMediaTime())
@@ -713,11 +735,11 @@ extension FaceMeasurementViewController: ARSessionDelegate {
     func session(_ session: ARSession, didFailWithError error: Error) {
         showError("ARKit session failed: \(error.localizedDescription)")
     }
-    
+
     func sessionWasInterrupted(_ session: ARSession) {
         statusLabel.text = "Session interrupted"
     }
-    
+
     func sessionInterruptionEnded(_ session: ARSession) {
         statusLabel.text = "Session resumed"
         startARSession()
@@ -731,20 +753,20 @@ extension FaceMeasurementViewController: MeasurementEngineDelegate {
             self.measurementCount += 1
             let progress = Float(self.measurementCount) / Float(self.requiredMeasurements)
             self.progressView.progress = min(progress, 1.0)
-            
+
             // Update status
             self.statusLabel.text = "Collected \(self.measurementCount) measurements"
-            
+
             // Show current measurements
             self.displayMeasurements(measurements)
-            
+
             // Auto-stop when enough measurements collected
             if self.measurementCount >= self.requiredMeasurements {
                 self.stopMeasurement()
             }
         }
     }
-    
+
     func measurementEngine(_ engine: MeasurementEngine, didEncounterError error: Error) {
         DispatchQueue.main.async {
             self.showError("Measurement error: \(error.localizedDescription)")
@@ -759,7 +781,7 @@ extension FaceMeasurementViewController: DataExportManagerDelegate {
             self.showSuccess("Data exported successfully!")
         }
     }
-    
+
     func dataExportManager(_ manager: DataExportManager, didEncounterError error: Error) {
         DispatchQueue.main.async {
             self.showError("Export error: \(error.localizedDescription)")

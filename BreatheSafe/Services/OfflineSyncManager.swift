@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// Protocol for handling offline sync events
 protocol OfflineSyncManagerDelegate: AnyObject {
