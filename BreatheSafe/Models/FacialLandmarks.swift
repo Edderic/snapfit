@@ -113,50 +113,52 @@ struct FacialMeasurementPairs {
         (1027, 884),
         (884, 883),
         (883,879),
-        (1049, 983),   // First two landmarks
-        (983, 982),   // First two landmarks
-        (982, 1050),   // First two landmarks
-        (1050, 1051),   // First two landmarks
-        (1051, 1052),   // First two landmarks
-        (1052, 1053),   // First two landmarks
-        (1053, 509),   // First two landmarks
-        (509, 893),   // First two landmarks
-        (893, 894),   // First two landmarks
-        (894, 881),   // First two landmarks
-        (881, 880),   // First two landmarks
-        (880, 879),   // First two landmarks
-        (879, 600),   // First two landmarks
-        (600, 756),   // First two landmarks
-        (756, 862),   // First two landmarks
-        (862, 753),   // First two landmarks
-        (753, 594),   // First two landmarks
-        (594, 582),   // First two landmarks
-        (582, 609),   // First two landmarks
-        (609, 802),   // First two landmarks
-        (802, 798),   // First two landmarks
-        (798, 14),   // First two landmarks
-        (14, 818),   // First two landmarks
-        (1049, 984),   // First two landmarks
-        (984, 985),    // First two landmarks
-        (985, 986),    // First two landmarks
-        (986, 987),    // First two landmarks
-        (987, 988),    // First two landmarks
-        (988, 989),    // First two landmarks
-        (989, 60),     // First two landmarks
-        (60, 478),     // First two landmarks
-        (478, 479),     // First two landmarks
-        (479, 453),     // First two landmarks
-        (452, 451),     // First two landmarks
-        (451, 151),     // First two landmarks
-        (151, 321),     // First two landmarks
-        (321, 434),     // First two landmarks
-        (434, 318),     // First two landmarks
-        (318, 145),     // First two landmarks
-        (145, 133),     // First two landmarks
-        (133, 160),     // First two landmarks
-        (160, 371),     // First two landmarks
-        (367, 387),     // First two landmarks
-        (387, 14),     // First two landmarks
+        (1049, 983),
+        (983, 982),
+        (982, 1050),
+        (1050, 1051),
+        (1051, 1052),
+        (1052, 1053),
+        (1053, 509),
+        (509, 893),
+        (893, 894),
+        (894, 881),
+        (881, 880),
+        (880, 879),
+        (879, 600),
+        (600, 756),
+        (756, 862),
+        (862, 753),
+        (753, 594),
+        (594, 582),
+        (582, 609),
+        (609, 802),
+        (802, 798),
+        (798, 14),
+        (14, 818),
+        (1049, 984),
+        (984, 985),
+        (985, 986),
+        (986, 987),
+        (987, 988),
+        (988, 989),
+        (989, 60),
+        (60, 478),
+        (478, 479),
+        (479, 453),
+        (453, 452),
+        (452, 451),
+        (451, 151),
+        (151, 321),
+        (321, 434),
+        (434, 318),
+        (318, 145),
+        (145, 133),
+        (133, 160),
+        (160, 371),
+        (371, 367),
+        (367, 387),
+        (387, 14),
         // Add your specific landmark pairs here once you find valid indices
     ]
 
