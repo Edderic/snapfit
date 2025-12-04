@@ -37,7 +37,10 @@ class MeasurementEngine {
     func processLandmarks(_ landmarks: FacialLandmarks) {
         do {
             let measurements = landmarks.distances(between: customMeasurementPairs)
-            let coordinates = landmarks.exportCoordinates()
+            
+            // Extract unique landmark indices from measurement pairs
+            let uniqueIndices = Set(customMeasurementPairs.flatMap { [$0.0, $0.1] })
+            let coordinates = landmarks.exportCoordinates(for: Array(uniqueIndices))
             
             // Add to history
             addToHistory(measurements)
