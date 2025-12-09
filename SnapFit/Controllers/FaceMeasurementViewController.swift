@@ -1,6 +1,7 @@
 import UIKit
 import ARKit
 import SceneKit
+import SafariServices
 
 @available(iOS 13.0, *)
 class FaceMeasurementViewController: UIViewController {
@@ -16,6 +17,7 @@ class FaceMeasurementViewController: UIViewController {
     var logoutButton: UIButton!
     var toggleMeasurementsButton: UIButton!
     var viewDataButton: UIButton!
+    var switchUserButton: UIButton!
 
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -24,6 +26,7 @@ class FaceMeasurementViewController: UIViewController {
     private var measurementCount = 0
     private let requiredMeasurements = 30 // Number of measurements to collect
     private var isMeasurementsVisible = true
+    private var managedUsers: [ManagedUser] = []
 
     // Authentication and API properties
     // TODO: Uncomment these once the new model files are added to the Xcode project
@@ -44,15 +47,13 @@ class FaceMeasurementViewController: UIViewController {
         setupDelegates()
         updateViewDataButtonVisibility()
     }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        updateViewDataButtonVisibility()
-    }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         startARSession()
+        updateViewDataButtonVisibility()
+        updateSwitchUserButtonVisibility()
+        loadManagedUsers()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -164,6 +165,18 @@ class FaceMeasurementViewController: UIViewController {
         logoutButton.addTarget(self, action: #selector(logoutButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(logoutButton)
 
+        // Create switch user button
+        switchUserButton = UIButton(type: .system)
+        switchUserButton.setTitle("Switch Respirator User", for: .normal)
+        switchUserButton.backgroundColor = UIColor.systemOrange
+        switchUserButton.setTitleColor(UIColor.white, for: .normal)
+        switchUserButton.layer.cornerRadius = 8
+        switchUserButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        switchUserButton.isHidden = true
+        switchUserButton.translatesAutoresizingMaskIntoConstraints = false
+        switchUserButton.addTarget(self, action: #selector(switchUserButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(switchUserButton)
+
         // Create toggle measurements button
         toggleMeasurementsButton = UIButton(type: .system)
         toggleMeasurementsButton.setTitle("Hide Measurements", for: .normal)
@@ -207,7 +220,7 @@ class FaceMeasurementViewController: UIViewController {
             measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             measurementLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
-            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: toggleMeasurementsButton.topAnchor, constant: -20),
+            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: switchUserButton.topAnchor, constant: -20),
 
             // Logout button (bottom button)
             logoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
@@ -237,7 +250,13 @@ class FaceMeasurementViewController: UIViewController {
             toggleMeasurementsButton.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -12),
             toggleMeasurementsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             toggleMeasurementsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44)
+            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44),
+
+            // Switch user button (above toggle measurements button)
+            switchUserButton.bottomAnchor.constraint(equalTo: toggleMeasurementsButton.topAnchor, constant: -12),
+            switchUserButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            switchUserButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            switchUserButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
 
@@ -478,6 +497,10 @@ class FaceMeasurementViewController: UIViewController {
         logout()
     }
 
+    @objc func switchUserButtonTapped(_ sender: UIButton) {
+        showManagedUsersSelection()
+    }
+
     @objc func toggleMeasurementsButtonTapped(_ sender: UIButton) {
         isMeasurementsVisible.toggle()
         measurementLabel.isHidden = !isMeasurementsVisible
@@ -711,6 +734,127 @@ class FaceMeasurementViewController: UIViewController {
         // Show button only if user is selected and authenticated
         let shouldShow = authService?.isAuthenticated == true && selectedUser != nil
         viewDataButton.isHidden = !shouldShow
+    }
+
+    private func updateSwitchUserButtonVisibility() {
+        // Show button only if authenticated
+        let shouldShow = authService?.isAuthenticated == true
+        switchUserButton.isHidden = !shouldShow
+    }
+
+    private func loadManagedUsers() {
+        guard let authService = authService, authService.isAuthenticated else {
+            return
+        }
+
+        authService.loadManagedUsers { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let users):
+                    self?.managedUsers = users
+                    self?.updateSwitchUserButtonVisibility()
+                case .failure(let error):
+                    self?.showError("Failed to load managed users: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func showManagedUsersSelection() {
+        // Check if we have managed users
+        if managedUsers.isEmpty {
+            let alert = UIAlertController(
+                title: "No Managed Users",
+                message: "There are no managed (respirator) users currently. Please create at least one.",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+                self?.openRespiratorUsersPage()
+            })
+            
+            present(alert, animated: true)
+            return
+        }
+
+        let alert = UIAlertController(
+            title: "Switch Respirator User",
+            message: "Choose a user to switch to:",
+            preferredStyle: .actionSheet
+        )
+
+        for user in managedUsers {
+            let title: String
+            if let selectedUser = selectedUser,
+               user.managedId == selectedUser.managedId {
+                // Mark currently selected user with checkmark
+                title = "✓ \(user.displayName)"
+            } else {
+                title = user.displayName
+            }
+            
+            alert.addAction(UIAlertAction(title: title, style: .default) { [weak self] _ in
+                self?.switchToUser(user)
+            })
+        }
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        // For iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = switchUserButton
+            popover.sourceRect = switchUserButton.bounds
+        }
+
+        present(alert, animated: true)
+    }
+
+    private func switchToUser(_ user: ManagedUser) {
+        // Stop measurement if currently measuring
+        if isMeasuring {
+            isMeasuring = false
+            measurementEngine.clearHistory()
+        }
+        
+        // Clear/reset current measurements
+        measurementEngine.clearHistory()
+        measurementCount = 0
+        
+        // Update selected user
+        selectedUser = user
+        
+        // Update title
+        title = "Face Measurement - \(user.displayName)"
+        
+        // Reset UI
+        startButton.setTitle("Start Measurement", for: .normal)
+        startButton.backgroundColor = UIColor.systemBlue
+        exportButton.isEnabled = false
+        progressView.isHidden = true
+        progressView.progress = 0.0
+        statusLabel.text = "Ready to start"
+        instructionLabel.text = "Position your face close to the camera (less than 12 inches away) in portrait mode. Remove glasses, hats, or anything covering your face."
+        
+        // Clear measurements display
+        measurementLabel.text = "Measurements will appear here after you start a measurement.\n\nPress 'Start Measurement' to begin collecting facial measurement data."
+        
+        // Reset background color
+        UIView.animate(withDuration: 0.3) {
+            self.view.backgroundColor = UIColor.systemBackground
+        }
+        
+        // Update view data button visibility
+        updateViewDataButtonVisibility()
+    }
+
+    private func openRespiratorUsersPage() {
+        guard let url = URL(string: "https://www.breathesafe.xyz/#/respirator_users") else {
+            showError("Invalid URL")
+            return
+        }
+        
+        let safariVC = SFSafariViewController(url: url)
+        present(safariVC, animated: true)
     }
 
     private func logout() {
