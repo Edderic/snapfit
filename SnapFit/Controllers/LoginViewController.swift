@@ -155,27 +155,27 @@ class LoginViewController: UIViewController {
             showError("Please enter both email and password")
             return
         }
-        
+
         login(email: email, password: password)
     }
-    
+
     @objc private func managedUsersButtonTapped(_ sender: UIButton) {
         showManagedUsersSelection()
     }
-    
+
     // MARK: - Authentication Methods
     private func login(email: String, password: String) {
         setLoading(true)
         hideError()
-        
+
         // Add some debugging
         print("Attempting login with email: \(email)")
         print("Using endpoint: https://www.breathesafe.xyz/users/log_in")
-        
+
         authService.login(email: email, password: password) { [weak self] result in
             DispatchQueue.main.async {
                 self?.setLoading(false)
-                
+
                 switch result {
                 case .success(let user):
                     print("Successfully logged in as: \(user.email)")
@@ -187,7 +187,7 @@ class LoginViewController: UIViewController {
             }
         }
     }
-    
+
     private func loadManagedUsers() {
         authService.loadManagedUsers { [weak self] result in
             DispatchQueue.main.async {
@@ -202,7 +202,7 @@ class LoginViewController: UIViewController {
             }
         }
     }
-    
+
     private func updateManagedUsersButton() {
         if !managedUsers.isEmpty {
             managedUsersButton.isHidden = false
@@ -211,39 +211,39 @@ class LoginViewController: UIViewController {
             managedUsersButton.isHidden = true
         }
     }
-    
+
     private func showManagedUsersSelection() {
         let alert = UIAlertController(title: "Select User", message: "Choose a user to capture measurements for:", preferredStyle: .actionSheet)
-        
+
         for user in managedUsers {
             alert.addAction(UIAlertAction(title: user.displayName, style: .default) { [weak self] _ in
                 self?.navigateToFaceMeasurement(for: user)
             })
         }
-        
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
+
         // For iPad
         if let popover = alert.popoverPresentationController {
             popover.sourceView = managedUsersButton
             popover.sourceRect = managedUsersButton.bounds
         }
-        
+
         present(alert, animated: true)
     }
-    
+
     private func navigateToFaceMeasurement(for user: ManagedUser) {
         let faceMeasurementVC = FaceMeasurementViewController()
         faceMeasurementVC.selectedUser = user
         faceMeasurementVC.authService = authService
         faceMeasurementVC.apiClient = apiClient
         faceMeasurementVC.offlineSyncManager = offlineSyncManager
-        
+
         let navigationController = UINavigationController(rootViewController: faceMeasurementVC)
         navigationController.modalPresentationStyle = .fullScreen
         present(navigationController, animated: true)
     }
-    
+
     // MARK: - UI Helper Methods
     private func setLoading(_ loading: Bool) {
         if loading {
@@ -256,12 +256,12 @@ class LoginViewController: UIViewController {
             loginButton.isEnabled = true
         }
     }
-    
+
     private func showError(_ message: String) {
         errorLabel.text = message
         errorLabel.isHidden = false
     }
-    
+
     private func hideError() {
         errorLabel.isHidden = true
     }
@@ -273,18 +273,18 @@ extension LoginViewController: AuthenticationServiceDelegate {
         // Handle successful login
         print("User logged in: \(user.email)")
     }
-    
+
     func authenticationService(_ service: AuthenticationService, didLogout user: User?) {
         // Handle logout
         managedUsers = []
         updateManagedUsersButton()
         print("User logged out")
     }
-    
+
     func authenticationService(_ service: AuthenticationService, didEncounterError error: AuthenticationError) {
         showError(error.localizedDescription)
     }
-    
+
     func authenticationService(_ service: AuthenticationService, didLoadManagedUsers users: [ManagedUser]) {
         managedUsers = users
         updateManagedUsersButton()
@@ -297,7 +297,7 @@ extension LoginViewController: APIClientDelegate {
         // Handle successful export
         print("Successfully exported measurements for user: \(user.managedId)")
     }
-    
+
     func apiClient(_ client: APIClient, didEncounterError error: APIError) {
         showError(error.localizedDescription)
     }
