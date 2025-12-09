@@ -97,10 +97,17 @@ class FaceMeasurementViewController: UIViewController {
 
         // Create measurement label (using UITextView for better text display)
         measurementLabel = UITextView()
-        measurementLabel.text = "Measurements will appear here"
-        measurementLabel.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .regular)
-        measurementLabel.backgroundColor = UIColor.systemBackground
+        measurementLabel.text = "Measurements will appear here after you start a measurement.\n\nPress 'Start Measurement' to begin collecting facial measurement data."
+        measurementLabel.font = UIFont.systemFont(ofSize: 14)
+        measurementLabel.backgroundColor = UIColor.secondarySystemBackground
+        measurementLabel.textColor = UIColor.label
         measurementLabel.isEditable = false
+        measurementLabel.isScrollEnabled = true
+        measurementLabel.layer.cornerRadius = 8
+        measurementLabel.layer.borderWidth = 1
+        measurementLabel.layer.borderColor = UIColor.separator.cgColor
+        measurementLabel.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        measurementLabel.isHidden = false
         measurementLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(measurementLabel)
 
@@ -180,6 +187,7 @@ class FaceMeasurementViewController: UIViewController {
             measurementLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
             measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            measurementLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
             measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: toggleMeasurementsButton.topAnchor, constant: -20),
 
             // Logout button (bottom button)
@@ -425,6 +433,12 @@ class FaceMeasurementViewController: UIViewController {
         // Update button title to reflect current state
         let title = isMeasurementsVisible ? "Hide Measurements" : "Show Measurements"
         toggleMeasurementsButton.setTitle(title, for: .normal)
+        
+        // If showing measurements again, refresh the display
+        if isMeasurementsVisible {
+            let averageMeasurements = measurementEngine.getAverageMeasurements()
+            displayMeasurements(averageMeasurements)
+        }
     }
 
     // MARK: - Measurement Control
@@ -477,7 +491,15 @@ class FaceMeasurementViewController: UIViewController {
 
     // MARK: - Data Display
     private func displayMeasurements(_ measurements: [String: Float]) {
-        var measurementText = "Average Measurements:\n\n"
+        guard isMeasurementsVisible else { return }
+        
+        if measurements.isEmpty {
+            measurementLabel.text = "Collecting measurements...\n\nMeasurements will appear here as they are collected."
+            return
+        }
+        
+        let title = isMeasuring ? "Current Measurements (Live):\n\n" : "Average Measurements:\n\n"
+        var measurementText = title
 
         for (key, value) in measurements.sorted(by: { $0.key < $1.key }) {
             let description = FacialMeasurementPairs.pairDescriptions[key] ?? key
