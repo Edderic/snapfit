@@ -2,49 +2,124 @@ import UIKit
 
 /// View controller for user authentication
 class LoginViewController: UIViewController {
-    
+
     // MARK: - UI Elements
+    private var scrollView: UIScrollView!
+    private var contentView: UIView!
+    private var firstParagraphTextView: UITextView!
+    private var attentionParagraphTextView: UITextView!
+    private var secondParagraphLabel: UILabel!
     private var emailTextField: UITextField!
     private var passwordTextField: UITextField!
     private var loginButton: UIButton!
     private var activityIndicator: UIActivityIndicatorView!
     private var errorLabel: UILabel!
     private var managedUsersButton: UIButton!
-    
+
     // MARK: - Properties
     private let authService = AuthenticationService()
     private let apiClient: APIClient
     private let offlineSyncManager: OfflineSyncManager
-    
+
     private var managedUsers: [ManagedUser] = []
-    
+
     init() {
         self.apiClient = APIClient(authService: authService)
         self.offlineSyncManager = OfflineSyncManager(apiClient: apiClient, authService: authService)
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupDelegates()
-        
+
         // Check if user is already authenticated
         if authService.isAuthenticated {
             loadManagedUsers()
         }
     }
-    
+
     // MARK: - Setup Methods
     private func setupUI() {
-        title = "BreatheSafe Login"
+        title = "SnapFit Login"
         view.backgroundColor = UIColor.systemBackground
+
+        // Create scroll view
+        scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+
+        // Create content view
+        contentView = UIView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(contentView)
+
+        // Create first paragraph text view
+        firstParagraphTextView = UITextView()
+        firstParagraphTextView.isEditable = false
+        firstParagraphTextView.isScrollEnabled = false
+        firstParagraphTextView.backgroundColor = .clear
+        firstParagraphTextView.textContainerInset = .zero
+        firstParagraphTextView.textContainer.lineFragmentPadding = 0
+        firstParagraphTextView.font = UIFont.systemFont(ofSize: 17)
+        firstParagraphTextView.textColor = UIColor.label
+        firstParagraphTextView.text = "Welcome to SnapFit! Find masks that would most likely fit your face — in a snap. Developed by Breathesafe LLC."
+        firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(firstParagraphTextView)
+
+        // Create attention paragraph text view (with clickable URL)
+        attentionParagraphTextView = UITextView()
+        attentionParagraphTextView.isEditable = false
+        attentionParagraphTextView.isScrollEnabled = false
+        attentionParagraphTextView.backgroundColor = .clear
+        attentionParagraphTextView.textContainerInset = .zero
+        attentionParagraphTextView.textContainer.lineFragmentPadding = 0
+        attentionParagraphTextView.font = UIFont.systemFont(ofSize: 17)
+        attentionParagraphTextView.textColor = UIColor.label
+        attentionParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Set up clickable URLs in attention paragraph
+        let attentionParagraphText = "Attention: fit testers: Please contribute your data to improve this mask recommender. For more information, see the consent form at https://breathesafe.xyz/#/consent_form. If you have not registered, please register here: https://www.breathesafe.xyz/#/signin"
+        let attributedString = NSMutableAttributedString(string: attentionParagraphText)
         
+        // Make consent form URL clickable
+        let consentFormUrlRange = (attentionParagraphText as NSString).range(of: "https://breathesafe.xyz/#/consent_form")
+        if consentFormUrlRange.location != NSNotFound {
+            attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormUrlRange)
+            attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: consentFormUrlRange)
+        }
+        
+        // Make registration URL clickable
+        let registrationUrlRange = (attentionParagraphText as NSString).range(of: "https://www.breathesafe.xyz/#/signin")
+        if registrationUrlRange.location != NSNotFound {
+            attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registrationUrlRange)
+            attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: registrationUrlRange)
+        }
+        
+        attentionParagraphTextView.attributedText = attributedString
+        attentionParagraphTextView.linkTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+        attentionParagraphTextView.delegate = self
+        contentView.addSubview(attentionParagraphTextView)
+
+        // Create second paragraph label
+        secondParagraphLabel = UILabel()
+        secondParagraphLabel.text = "After a successful registration, please log in with your Breathesafe credentials:"
+        secondParagraphLabel.font = UIFont.systemFont(ofSize: 17)
+        secondParagraphLabel.textColor = UIColor.label
+        secondParagraphLabel.numberOfLines = 0
+        secondParagraphLabel.textAlignment = .left
+        secondParagraphLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(secondParagraphLabel)
+
         // Create email text field
         emailTextField = UITextField()
         emailTextField.placeholder = "Email"
@@ -53,16 +128,16 @@ class LoginViewController: UIViewController {
         emailTextField.autocapitalizationType = .none
         emailTextField.autocorrectionType = .no
         emailTextField.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(emailTextField)
-        
+        contentView.addSubview(emailTextField)
+
         // Create password text field
         passwordTextField = UITextField()
         passwordTextField.placeholder = "Password"
         passwordTextField.borderStyle = .roundedRect
         passwordTextField.isSecureTextEntry = true
         passwordTextField.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(passwordTextField)
-        
+        contentView.addSubview(passwordTextField)
+
         // Create login button
         loginButton = UIButton(type: .system)
         loginButton.setTitle("Login", for: .normal)
@@ -72,14 +147,14 @@ class LoginViewController: UIViewController {
         loginButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         loginButton.translatesAutoresizingMaskIntoConstraints = false
         loginButton.addTarget(self, action: #selector(loginButtonTapped(_:)), for: .touchUpInside)
-        view.addSubview(loginButton)
-        
+        contentView.addSubview(loginButton)
+
         // Create activity indicator
         activityIndicator = UIActivityIndicatorView(style: .medium)
         activityIndicator.hidesWhenStopped = true
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(activityIndicator)
-        
+        contentView.addSubview(activityIndicator)
+
         // Create error label
         errorLabel = UILabel()
         errorLabel.textColor = UIColor.systemRed
@@ -88,8 +163,8 @@ class LoginViewController: UIViewController {
         errorLabel.font = UIFont.systemFont(ofSize: 14)
         errorLabel.isHidden = true
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(errorLabel)
-        
+        contentView.addSubview(errorLabel)
+
         // Create managed users button
         managedUsersButton = UIButton(type: .system)
         managedUsersButton.setTitle("Select User for Measurement", for: .normal)
@@ -100,56 +175,99 @@ class LoginViewController: UIViewController {
         managedUsersButton.isHidden = true
         managedUsersButton.translatesAutoresizingMaskIntoConstraints = false
         managedUsersButton.addTarget(self, action: #selector(managedUsersButtonTapped(_:)), for: .touchUpInside)
-        view.addSubview(managedUsersButton)
-        
+        contentView.addSubview(managedUsersButton)
+
         setupConstraints()
     }
-    
+
     private func setupConstraints() {
         NSLayoutConstraint.activate([
+            // Scroll view constraints
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            // Content view constraints
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+
+            // First paragraph text view
+            firstParagraphTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            firstParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            firstParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
+            // Attention paragraph text view
+            attentionParagraphTextView.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 20),
+            attentionParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            attentionParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
+            // Second paragraph label
+            secondParagraphLabel.topAnchor.constraint(equalTo: attentionParagraphTextView.bottomAnchor, constant: 20),
+            secondParagraphLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            secondParagraphLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
             // Email text field
-            emailTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100),
-            emailTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            emailTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            emailTextField.topAnchor.constraint(equalTo: secondParagraphLabel.bottomAnchor, constant: 20),
+            emailTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            emailTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 44),
-            
+
             // Password text field
             passwordTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 16),
-            passwordTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            passwordTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            passwordTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            passwordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             passwordTextField.heightAnchor.constraint(equalToConstant: 44),
-            
+
             // Login button
             loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 24),
-            loginButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            loginButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            loginButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            loginButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             loginButton.heightAnchor.constraint(equalToConstant: 50),
-            
+
             // Activity indicator
             activityIndicator.centerXAnchor.constraint(equalTo: loginButton.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: loginButton.centerYAnchor),
-            
+
             // Error label
             errorLabel.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 16),
-            errorLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            errorLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
+            errorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            errorLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
             // Managed users button
             managedUsersButton.topAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: 24),
-            managedUsersButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            managedUsersButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            managedUsersButton.heightAnchor.constraint(equalToConstant: 50)
+            managedUsersButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            managedUsersButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            managedUsersButton.heightAnchor.constraint(equalToConstant: 50),
+            managedUsersButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
-    
+
     private func setupDelegates() {
         authService.delegate = self
         apiClient.delegate = self
         offlineSyncManager.delegate = self
+        emailTextField.delegate = self
+        passwordTextField.delegate = self
+        
+        // Add tap gesture to dismiss keyboard when tapping outside text fields
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
     }
     
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+
     // MARK: - Actions
     @objc private func loginButtonTapped(_ sender: UIButton) {
+        // Dismiss keyboard when login button is tapped
+        view.endEditing(true)
+        
         guard let email = emailTextField.text, !email.isEmpty,
               let password = passwordTextField.text, !password.isEmpty else {
             showError("Please enter both email and password")
@@ -310,8 +428,31 @@ extension LoginViewController: OfflineSyncManagerDelegate {
             print("Synced \(count) pending measurements")
         }
     }
-    
+
     func offlineSyncManager(_ manager: OfflineSyncManager, didEncounterError error: OfflineSyncError) {
         print("Offline sync error: \(error.localizedDescription)")
+    }
+}
+
+// MARK: - UITextViewDelegate
+extension LoginViewController: UITextViewDelegate {
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+        UIApplication.shared.open(URL)
+        return false
+    }
+}
+
+// MARK: - UITextFieldDelegate
+extension LoginViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == emailTextField {
+            // Move to password field when return is pressed on email field
+            passwordTextField.becomeFirstResponder()
+        } else if textField == passwordTextField {
+            // Dismiss keyboard and attempt login when return is pressed on password field
+            textField.resignFirstResponder()
+            loginButtonTapped(loginButton)
+        }
+        return true
     }
 }

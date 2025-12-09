@@ -167,26 +167,25 @@ class FaceMeasurementViewController: UIViewController {
             measurementLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
             measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            measurementLabel.heightAnchor.constraint(equalToConstant: 200),
+            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: startButton.topAnchor, constant: -20),
 
-            // Start button
-            startButton.topAnchor.constraint(equalTo: measurementLabel.bottomAnchor, constant: 16),
-            startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            startButton.heightAnchor.constraint(equalToConstant: 50),
+            // Logout button (bottom button)
+            logoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            logoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            logoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            logoutButton.heightAnchor.constraint(equalToConstant: 44),
 
-            // Export button
-            exportButton.topAnchor.constraint(equalTo: startButton.bottomAnchor, constant: 16),
+            // Export button (middle button)
+            exportButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -12),
             exportButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             exportButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             exportButton.heightAnchor.constraint(equalToConstant: 50),
 
-            // Logout button
-            logoutButton.topAnchor.constraint(equalTo: exportButton.bottomAnchor, constant: 16),
-            logoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            logoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            logoutButton.heightAnchor.constraint(equalToConstant: 44),
-            logoutButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            // Start button (top button)
+            startButton.bottomAnchor.constraint(equalTo: exportButton.topAnchor, constant: -12),
+            startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            startButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
