@@ -531,17 +531,11 @@ class FaceMeasurementViewController: UIViewController {
         let alert = UIAlertController(title: "Export Data", message: "Choose how to export your measurements", preferredStyle: .actionSheet)
 
         // Prioritize server export if authenticated
-        // TODO: Uncomment this once the new model files are added to the Xcode project
         if authService?.isAuthenticated == true && selectedUser != nil {
             alert.addAction(UIAlertAction(title: "Send to BreatheSafe Server", style: .default) { _ in
                 self.sendToServer(measurements)
             })
         }
-
-        // Temporary: Always show server export option
-        alert.addAction(UIAlertAction(title: "Send to BreatheSafe Server", style: .default) { _ in
-            self.sendToServer(measurements)
-        })
 
         alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
             self.dataExportManager.shareMeasurements(measurements, from: self)
