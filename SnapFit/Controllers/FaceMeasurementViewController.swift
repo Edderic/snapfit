@@ -702,20 +702,6 @@ class FaceMeasurementViewController: UIViewController {
                 }
             }
         }
-
-        // Temporary fallback to original functionality
-        dataExportManager.setServerURL("https://breathesafe.xyz/users/1/facial_measurements_from_arkit")
-
-        dataExportManager.sendToServer(measurements) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    self.showSuccess("Data sent to server successfully!")
-                case .failure(let error):
-                    self.showError("Failed to send data: \(error.localizedDescription)")
-                }
-            }
-        }
     }
 
     // TODO: Uncomment these methods once the new model files are added to the Xcode project
