@@ -132,38 +132,6 @@ class DataExportManager {
         }
     }
 
-    /// Generate CSV format for measurements
-    func exportToCSV(_ measurements: [String: Any]) -> String? {
-        guard let averageMeasurements = measurements["average_measurements"] as? [String: Any] else {
-            return nil
-        }
-
-        var csv = "Type,Index,Description,Value,X,Y,Z\n"
-
-        // Add distance measurements
-        for (key, measurementData) in averageMeasurements {
-            if let measurementDict = measurementData as? [String: Any],
-               let value = measurementDict["value"] as? Float,
-               let description = measurementDict["description"] as? String {
-                csv += "\"Distance\",\"\(key)\",\"\(description)\",\(value),,,\n"
-            }
-        }
-
-        // Add landmark coordinates
-        if let landmarkCoordinates = measurements["landmark_coordinates"] as? [String: Any] {
-            for (index, coordinateData) in landmarkCoordinates {
-                if let coordDict = coordinateData as? [String: Any],
-                   let x = coordDict["x"] as? Float,
-                   let y = coordDict["y"] as? Float,
-                   let z = coordDict["z"] as? Float {
-                    csv += "\"Coordinate\",\"\(index)\",\"Landmark \(index)\",,\(x),\(y),\(z)\n"
-                }
-            }
-        }
-
-        return csv
-    }
-
     /// Save measurements to local file
     func saveToLocalFile(_ measurements: [String: Any], filename: String = "facial_measurements") -> URL? {
         guard let jsonString = exportToJSON(measurements) else {
