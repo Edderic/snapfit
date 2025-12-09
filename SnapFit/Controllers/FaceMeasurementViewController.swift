@@ -16,8 +16,7 @@ class FaceMeasurementViewController: UIViewController {
     var progressView: UIProgressView!
     var logoutButton: UIButton!
     var toggleMeasurementsButton: UIButton!
-    var viewDataButton: UIButton!
-    var switchUserButton: UIButton!
+    var otherOptionsButton: UIButton!
 
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -25,7 +24,7 @@ class FaceMeasurementViewController: UIViewController {
     private var isMeasuring = false
     private var measurementCount = 0
     private let requiredMeasurements = 30 // Number of measurements to collect
-    private var isMeasurementsVisible = true
+    private var isMeasurementsVisible = false
     private var managedUsers: [ManagedUser] = []
 
     // Authentication and API properties
@@ -45,14 +44,11 @@ class FaceMeasurementViewController: UIViewController {
         setupUI()
         setupARKit()
         setupDelegates()
-        updateViewDataButtonVisibility()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         startARSession()
-        updateViewDataButtonVisibility()
-        updateSwitchUserButtonVisibility()
         loadManagedUsers()
     }
 
@@ -115,7 +111,7 @@ class FaceMeasurementViewController: UIViewController {
         measurementLabel.layer.borderWidth = 1
         measurementLabel.layer.borderColor = UIColor.separator.cgColor
         measurementLabel.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
-        measurementLabel.isHidden = false
+        measurementLabel.isHidden = true
         measurementLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(measurementLabel)
 
@@ -142,51 +138,40 @@ class FaceMeasurementViewController: UIViewController {
         exportButton.addTarget(self, action: #selector(exportButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(exportButton)
 
-        // Create view data button
-        viewDataButton = UIButton(type: .system)
-        viewDataButton.setTitle("View Data on Breathesafe", for: .normal)
-        viewDataButton.backgroundColor = UIColor.systemPurple
-        viewDataButton.setTitleColor(UIColor.white, for: .normal)
-        viewDataButton.layer.cornerRadius = 8
-        viewDataButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        viewDataButton.isHidden = true
-        viewDataButton.translatesAutoresizingMaskIntoConstraints = false
-        viewDataButton.addTarget(self, action: #selector(viewDataButtonTapped(_:)), for: .touchUpInside)
-        view.addSubview(viewDataButton)
-
-        // Create logout button
+        // Create logout button (hidden, accessed via Other Options)
         logoutButton = UIButton(type: .system)
         logoutButton.setTitle("Logout", for: .normal)
         logoutButton.backgroundColor = UIColor.systemRed
         logoutButton.setTitleColor(UIColor.white, for: .normal)
         logoutButton.layer.cornerRadius = 8
         logoutButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        logoutButton.isHidden = true
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
         logoutButton.addTarget(self, action: #selector(logoutButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(logoutButton)
 
-        // Create switch user button
-        switchUserButton = UIButton(type: .system)
-        switchUserButton.setTitle("Switch Respirator User", for: .normal)
-        switchUserButton.backgroundColor = UIColor.systemOrange
-        switchUserButton.setTitleColor(UIColor.white, for: .normal)
-        switchUserButton.layer.cornerRadius = 8
-        switchUserButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        switchUserButton.isHidden = true
-        switchUserButton.translatesAutoresizingMaskIntoConstraints = false
-        switchUserButton.addTarget(self, action: #selector(switchUserButtonTapped(_:)), for: .touchUpInside)
-        view.addSubview(switchUserButton)
-
-        // Create toggle measurements button
+        // Create toggle measurements button (hidden, accessed via Other Options)
         toggleMeasurementsButton = UIButton(type: .system)
-        toggleMeasurementsButton.setTitle("Hide Measurements", for: .normal)
+        toggleMeasurementsButton.setTitle("Show Measurements", for: .normal)
         toggleMeasurementsButton.backgroundColor = UIColor.systemGray
         toggleMeasurementsButton.setTitleColor(UIColor.white, for: .normal)
         toggleMeasurementsButton.layer.cornerRadius = 8
         toggleMeasurementsButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        toggleMeasurementsButton.isHidden = true
         toggleMeasurementsButton.translatesAutoresizingMaskIntoConstraints = false
         toggleMeasurementsButton.addTarget(self, action: #selector(toggleMeasurementsButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(toggleMeasurementsButton)
+
+        // Create other options button
+        otherOptionsButton = UIButton(type: .system)
+        otherOptionsButton.setTitle("Other Options", for: .normal)
+        otherOptionsButton.backgroundColor = UIColor.systemIndigo
+        otherOptionsButton.setTitleColor(UIColor.white, for: .normal)
+        otherOptionsButton.layer.cornerRadius = 8
+        otherOptionsButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        otherOptionsButton.translatesAutoresizingMaskIntoConstraints = false
+        otherOptionsButton.addTarget(self, action: #selector(otherOptionsButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(otherOptionsButton)
 
         // Set up constraints
         setupConstraints()
@@ -219,44 +204,37 @@ class FaceMeasurementViewController: UIViewController {
             measurementLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
             measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            measurementLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
-            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: switchUserButton.topAnchor, constant: -20),
+            measurementLabel.heightAnchor.constraint(equalToConstant: 100),
+            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: startButton.topAnchor, constant: -20),
 
-            // Logout button (bottom button)
-            logoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            logoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            logoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            logoutButton.heightAnchor.constraint(equalToConstant: 44),
+            // Other Options button (bottom button)
+            otherOptionsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            otherOptionsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            otherOptionsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            otherOptionsButton.heightAnchor.constraint(equalToConstant: 50),
 
-            // View data button (above logout)
-            viewDataButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -12),
-            viewDataButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            viewDataButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            viewDataButton.heightAnchor.constraint(equalToConstant: 50),
-
-            // Export button (above view data)
-            exportButton.bottomAnchor.constraint(equalTo: viewDataButton.topAnchor, constant: -12),
+            // Export button (above other options)
+            exportButton.bottomAnchor.constraint(equalTo: otherOptionsButton.topAnchor, constant: -12),
             exportButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             exportButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             exportButton.heightAnchor.constraint(equalToConstant: 50),
 
-            // Start button (top button)
+            // Start button (above export)
             startButton.bottomAnchor.constraint(equalTo: exportButton.topAnchor, constant: -12),
             startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             startButton.heightAnchor.constraint(equalToConstant: 50),
 
-            // Toggle measurements button (above start button)
+            // Hidden buttons (for reference, but not visible)
+            logoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            logoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            logoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            logoutButton.heightAnchor.constraint(equalToConstant: 44),
+
             toggleMeasurementsButton.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -12),
             toggleMeasurementsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             toggleMeasurementsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44),
-
-            // Switch user button (above toggle measurements button)
-            switchUserButton.bottomAnchor.constraint(equalTo: toggleMeasurementsButton.topAnchor, constant: -12),
-            switchUserButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            switchUserButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            switchUserButton.heightAnchor.constraint(equalToConstant: 44)
+            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
 
@@ -466,7 +444,7 @@ class FaceMeasurementViewController: UIViewController {
         exportData()
     }
 
-    @objc func viewDataButtonTapped(_ sender: UIButton) {
+    private func openViewDataPage() {
         // Check if user is authenticated
         guard let authService = authService, authService.isAuthenticated else {
             // User not authenticated, dismiss and return to login
@@ -497,23 +475,66 @@ class FaceMeasurementViewController: UIViewController {
         logout()
     }
 
+    @objc func otherOptionsButtonTapped(_ sender: UIButton) {
+        let alert = UIAlertController(
+            title: "Other Options",
+            message: nil,
+            preferredStyle: .actionSheet
+        )
+
+        // Switch Respirator User
+        if authService?.isAuthenticated == true {
+            alert.addAction(UIAlertAction(title: "Switch Respirator User", style: .default) { [weak self] _ in
+                self?.showManagedUsersSelection()
+            })
+        }
+
+        // Show/Hide Measurements View
+        let measurementsTitle = isMeasurementsVisible ? "Hide Measurements View" : "Show Measurements View"
+        alert.addAction(UIAlertAction(title: measurementsTitle, style: .default) { [weak self] _ in
+            self?.toggleMeasurements()
+        })
+
+        // View data on Breathesafe
+        if authService?.isAuthenticated == true && selectedUser != nil {
+            alert.addAction(UIAlertAction(title: "View data on Breathesafe", style: .default) { [weak self] _ in
+                self?.openViewDataPage()
+            })
+        }
+
+        // Logout
+        alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
+            self?.logout()
+        })
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        // For iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = otherOptionsButton
+            popover.sourceRect = otherOptionsButton.bounds
+        }
+
+        present(alert, animated: true)
+    }
+
     @objc func switchUserButtonTapped(_ sender: UIButton) {
         showManagedUsersSelection()
     }
 
-    @objc func toggleMeasurementsButtonTapped(_ sender: UIButton) {
+    private func toggleMeasurements() {
         isMeasurementsVisible.toggle()
         measurementLabel.isHidden = !isMeasurementsVisible
-        
-        // Update button title to reflect current state
-        let title = isMeasurementsVisible ? "Hide Measurements" : "Show Measurements"
-        toggleMeasurementsButton.setTitle(title, for: .normal)
         
         // If showing measurements again, refresh the display
         if isMeasurementsVisible {
             let averageMeasurements = measurementEngine.getAverageMeasurements()
             displayMeasurements(averageMeasurements)
         }
+    }
+
+    @objc func toggleMeasurementsButtonTapped(_ sender: UIButton) {
+        toggleMeasurements()
     }
 
     // MARK: - Measurement Control
@@ -530,12 +551,6 @@ class FaceMeasurementViewController: UIViewController {
 
         instructionLabel.text = "Keep your face steady and centered in the camera view. Measurements are being collected..."
         statusLabel.text = "Collecting measurements..."
-
-        // Ensure measurements are visible and display initial state
-        isMeasurementsVisible = true
-        measurementLabel.isHidden = false
-        measurementLabel.text = "Collecting measurements...\n\nMeasurements will appear here as they are collected."
-        toggleMeasurementsButton.setTitle("Hide Measurements", for: .normal)
 
         // Update UI to show measurement is active
         UIView.animate(withDuration: 0.3) {
@@ -730,18 +745,6 @@ class FaceMeasurementViewController: UIViewController {
         showSuccess("Data saved offline and will sync when connected")
     }
 
-    private func updateViewDataButtonVisibility() {
-        // Show button only if user is selected and authenticated
-        let shouldShow = authService?.isAuthenticated == true && selectedUser != nil
-        viewDataButton.isHidden = !shouldShow
-    }
-
-    private func updateSwitchUserButtonVisibility() {
-        // Show button only if authenticated
-        let shouldShow = authService?.isAuthenticated == true
-        switchUserButton.isHidden = !shouldShow
-    }
-
     private func loadManagedUsers() {
         guard let authService = authService, authService.isAuthenticated else {
             return
@@ -752,7 +755,6 @@ class FaceMeasurementViewController: UIViewController {
                 switch result {
                 case .success(let users):
                     self?.managedUsers = users
-                    self?.updateSwitchUserButtonVisibility()
                 case .failure(let error):
                     self?.showError("Failed to load managed users: \(error.localizedDescription)")
                 }
@@ -802,8 +804,8 @@ class FaceMeasurementViewController: UIViewController {
 
         // For iPad
         if let popover = alert.popoverPresentationController {
-            popover.sourceView = switchUserButton
-            popover.sourceRect = switchUserButton.bounds
+            popover.sourceView = otherOptionsButton
+            popover.sourceRect = otherOptionsButton.bounds
         }
 
         present(alert, animated: true)
@@ -842,9 +844,6 @@ class FaceMeasurementViewController: UIViewController {
         UIView.animate(withDuration: 0.3) {
             self.view.backgroundColor = UIColor.systemBackground
         }
-        
-        // Update view data button visibility
-        updateViewDataButtonVisibility()
     }
 
     private func openRespiratorUsersPage() {
