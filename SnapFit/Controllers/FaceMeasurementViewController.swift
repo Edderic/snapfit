@@ -14,6 +14,7 @@ class FaceMeasurementViewController: UIViewController {
     var statusLabel: UILabel!
     var progressView: UIProgressView!
     var logoutButton: UIButton!
+    var toggleMeasurementsButton: UIButton!
 
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -21,6 +22,7 @@ class FaceMeasurementViewController: UIViewController {
     private var isMeasuring = false
     private var measurementCount = 0
     private let requiredMeasurements = 30 // Number of measurements to collect
+    private var isMeasurementsVisible = true
 
     // Authentication and API properties
     // TODO: Uncomment these once the new model files are added to the Xcode project
@@ -136,6 +138,17 @@ class FaceMeasurementViewController: UIViewController {
         logoutButton.addTarget(self, action: #selector(logoutButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(logoutButton)
 
+        // Create toggle measurements button
+        toggleMeasurementsButton = UIButton(type: .system)
+        toggleMeasurementsButton.setTitle("Hide Measurements", for: .normal)
+        toggleMeasurementsButton.backgroundColor = UIColor.systemGray
+        toggleMeasurementsButton.setTitleColor(UIColor.white, for: .normal)
+        toggleMeasurementsButton.layer.cornerRadius = 8
+        toggleMeasurementsButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        toggleMeasurementsButton.translatesAutoresizingMaskIntoConstraints = false
+        toggleMeasurementsButton.addTarget(self, action: #selector(toggleMeasurementsButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(toggleMeasurementsButton)
+
         // Set up constraints
         setupConstraints()
     }
@@ -167,7 +180,7 @@ class FaceMeasurementViewController: UIViewController {
             measurementLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
             measurementLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             measurementLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: startButton.topAnchor, constant: -20),
+            measurementLabel.bottomAnchor.constraint(lessThanOrEqualTo: toggleMeasurementsButton.topAnchor, constant: -20),
 
             // Logout button (bottom button)
             logoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
@@ -185,7 +198,13 @@ class FaceMeasurementViewController: UIViewController {
             startButton.bottomAnchor.constraint(equalTo: exportButton.topAnchor, constant: -12),
             startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            startButton.heightAnchor.constraint(equalToConstant: 50)
+            startButton.heightAnchor.constraint(equalToConstant: 50),
+
+            // Toggle measurements button (above start button)
+            toggleMeasurementsButton.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -12),
+            toggleMeasurementsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            toggleMeasurementsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
 
@@ -399,12 +418,20 @@ class FaceMeasurementViewController: UIViewController {
         logout()
     }
 
+    @objc func toggleMeasurementsButtonTapped(_ sender: UIButton) {
+        isMeasurementsVisible.toggle()
+        measurementLabel.isHidden = !isMeasurementsVisible
+        
+        // Update button title to reflect current state
+        let title = isMeasurementsVisible ? "Hide Measurements" : "Show Measurements"
+        toggleMeasurementsButton.setTitle(title, for: .normal)
+    }
+
     // MARK: - Measurement Control
     private func startMeasurement() {
         isMeasuring = true
         measurementCount = 0
         measurementEngine.clearHistory()
-
 
         startButton.setTitle("Stop Measurement", for: .normal)
         startButton.backgroundColor = UIColor.systemRed
@@ -414,6 +441,12 @@ class FaceMeasurementViewController: UIViewController {
 
         instructionLabel.text = "Keep your face steady and centered in the camera view. Measurements are being collected..."
         statusLabel.text = "Collecting measurements..."
+
+        // Ensure measurements are visible and display initial state
+        isMeasurementsVisible = true
+        measurementLabel.isHidden = false
+        measurementLabel.text = "Collecting measurements...\n\nMeasurements will appear here as they are collected."
+        toggleMeasurementsButton.setTitle("Hide Measurements", for: .normal)
 
         // Update UI to show measurement is active
         UIView.animate(withDuration: 0.3) {
