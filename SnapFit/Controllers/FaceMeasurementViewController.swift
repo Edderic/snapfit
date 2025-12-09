@@ -15,6 +15,7 @@ class FaceMeasurementViewController: UIViewController {
     var progressView: UIProgressView!
     var logoutButton: UIButton!
     var toggleMeasurementsButton: UIButton!
+    var viewDataButton: UIButton!
 
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -41,6 +42,12 @@ class FaceMeasurementViewController: UIViewController {
         setupUI()
         setupARKit()
         setupDelegates()
+        updateViewDataButtonVisibility()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updateViewDataButtonVisibility()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -134,6 +141,18 @@ class FaceMeasurementViewController: UIViewController {
         exportButton.addTarget(self, action: #selector(exportButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(exportButton)
 
+        // Create view data button
+        viewDataButton = UIButton(type: .system)
+        viewDataButton.setTitle("View Data on Breathesafe", for: .normal)
+        viewDataButton.backgroundColor = UIColor.systemPurple
+        viewDataButton.setTitleColor(UIColor.white, for: .normal)
+        viewDataButton.layer.cornerRadius = 8
+        viewDataButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        viewDataButton.isHidden = true
+        viewDataButton.translatesAutoresizingMaskIntoConstraints = false
+        viewDataButton.addTarget(self, action: #selector(viewDataButtonTapped(_:)), for: .touchUpInside)
+        view.addSubview(viewDataButton)
+
         // Create logout button
         logoutButton = UIButton(type: .system)
         logoutButton.setTitle("Logout", for: .normal)
@@ -196,8 +215,14 @@ class FaceMeasurementViewController: UIViewController {
             logoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             logoutButton.heightAnchor.constraint(equalToConstant: 44),
 
-            // Export button (middle button)
-            exportButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -12),
+            // View data button (above logout)
+            viewDataButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -12),
+            viewDataButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            viewDataButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            viewDataButton.heightAnchor.constraint(equalToConstant: 50),
+
+            // Export button (above view data)
+            exportButton.bottomAnchor.constraint(equalTo: viewDataButton.topAnchor, constant: -12),
             exportButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             exportButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             exportButton.heightAnchor.constraint(equalToConstant: 50),
@@ -420,6 +445,33 @@ class FaceMeasurementViewController: UIViewController {
 
     @objc func exportButtonTapped(_ sender: UIButton) {
         exportData()
+    }
+
+    @objc func viewDataButtonTapped(_ sender: UIButton) {
+        // Check if user is authenticated
+        guard let authService = authService, authService.isAuthenticated else {
+            // User not authenticated, dismiss and return to login
+            dismiss(animated: true)
+            return
+        }
+        
+        // Check if user is selected
+        guard let selectedUser = selectedUser,
+              let managedId = selectedUser.managedId else {
+            showError("No user selected")
+            return
+        }
+        
+        // Construct URL
+        let urlString = "http://www.breathesafe.xyz/#/respirator_user/\(managedId)?tabToShow=Facial+Measurements"
+        
+        guard let url = URL(string: urlString) else {
+            showError("Invalid URL")
+            return
+        }
+        
+        // Open in Safari
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 
     @objc func logoutButtonTapped(_ sender: UIButton) {
@@ -653,6 +705,12 @@ class FaceMeasurementViewController: UIViewController {
 
         offlineSyncManager.saveMeasurementsOffline(measurements, for: selectedUser.managedId ?? 0)
         showSuccess("Data saved offline and will sync when connected")
+    }
+
+    private func updateViewDataButtonVisibility() {
+        // Show button only if user is selected and authenticated
+        let shouldShow = authService?.isAuthenticated == true && selectedUser != nil
+        viewDataButton.isHidden = !shouldShow
     }
 
     private func logout() {
