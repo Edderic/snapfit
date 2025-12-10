@@ -100,6 +100,9 @@ class LoginViewController: UIViewController {
         contributeDataButton.setTitleColor(UIColor.white, for: .normal)
         contributeDataButton.layer.cornerRadius = 8
         contributeDataButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        contributeDataButton.titleLabel?.numberOfLines = 1
+        contributeDataButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        contributeDataButton.titleLabel?.minimumScaleFactor = 0.7
         contributeDataButton.translatesAutoresizingMaskIntoConstraints = false
         contributeDataButton.addTarget(self, action: #selector(contributeDataButtonTapped), for: .touchUpInside)
         contentView.addSubview(contributeDataButton)
@@ -208,13 +211,13 @@ class LoginViewController: UIViewController {
             recommendMasksButton.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 40),
             recommendMasksButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             recommendMasksButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            recommendMasksButton.heightAnchor.constraint(equalToConstant: 50),
+            recommendMasksButton.heightAnchor.constraint(equalToConstant: 44),
 
             // Contribute Data button
             contributeDataButton.topAnchor.constraint(equalTo: recommendMasksButton.bottomAnchor, constant: 16),
             contributeDataButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             contributeDataButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            contributeDataButton.heightAnchor.constraint(equalToConstant: 50),
+            contributeDataButton.heightAnchor.constraint(equalToConstant: 44),
             contributeButtonBottomConstraint,
 
             // Email text field (positioned after first paragraph when login form is shown)
@@ -318,13 +321,22 @@ class LoginViewController: UIViewController {
 
     @objc private func logoutButtonTapped() {
         // Perform logout
-        authService.logout()
-        
-        // Clear managed users
-        managedUsers = []
-        
-        // Return to main menu
-        showMainMenu()
+        authService.logout { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    print("Successfully logged out")
+                case .failure(let error):
+                    print("Logout error: \(error)")
+                }
+                
+                // Clear managed users
+                self?.managedUsers = []
+                
+                // Return to main menu
+                self?.showMainMenu()
+            }
+        }
     }
 
     // MARK: - Authentication Methods
