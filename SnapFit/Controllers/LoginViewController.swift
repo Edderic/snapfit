@@ -15,6 +15,7 @@ class LoginViewController: UIViewController {
     private var activityIndicator: UIActivityIndicatorView!
     private var errorLabel: UILabel!
     private var managedUsersButton: UIButton!
+    private var logoutButton: UIButton!
 
     // MARK: - Properties
     private let authService = AuthenticationService()
@@ -160,6 +161,18 @@ class LoginViewController: UIViewController {
         managedUsersButton.addTarget(self, action: #selector(managedUsersButtonTapped(_:)), for: .touchUpInside)
         contentView.addSubview(managedUsersButton)
 
+        // Create logout button
+        logoutButton = UIButton(type: .system)
+        logoutButton.setTitle("Logout", for: .normal)
+        logoutButton.backgroundColor = UIColor.systemRed
+        logoutButton.setTitleColor(UIColor.white, for: .normal)
+        logoutButton.layer.cornerRadius = 8
+        logoutButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        logoutButton.isHidden = true
+        logoutButton.translatesAutoresizingMaskIntoConstraints = false
+        logoutButton.addTarget(self, action: #selector(logoutButtonTapped), for: .touchUpInside)
+        contentView.addSubview(logoutButton)
+
         // Hide login form initially
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
@@ -236,7 +249,13 @@ class LoginViewController: UIViewController {
             managedUsersButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             managedUsersButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             managedUsersButton.heightAnchor.constraint(equalToConstant: 50),
-            managedUsersButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+
+            // Logout button
+            logoutButton.topAnchor.constraint(equalTo: managedUsersButton.bottomAnchor, constant: 16),
+            logoutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            logoutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            logoutButton.heightAnchor.constraint(equalToConstant: 50),
+            logoutButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
 
@@ -297,6 +316,17 @@ class LoginViewController: UIViewController {
         showManagedUsersSelection()
     }
 
+    @objc private func logoutButtonTapped() {
+        // Perform logout
+        authService.logout()
+        
+        // Clear managed users
+        managedUsers = []
+        
+        // Return to main menu
+        showMainMenu()
+    }
+
     // MARK: - Authentication Methods
     private func login(email: String, password: String) {
         setLoading(true)
@@ -330,6 +360,7 @@ class LoginViewController: UIViewController {
                     print("Successfully loaded \(users.count) managed users")
                     self?.managedUsers = users
                     self?.updateManagedUsersButton()
+                    self?.showAuthenticatedState()
                 case .failure(let error):
                     print("Failed to load managed users: \(error)")
                 }
@@ -344,6 +375,19 @@ class LoginViewController: UIViewController {
         } else {
             managedUsersButton.isHidden = true
         }
+    }
+
+    private func showAuthenticatedState() {
+        // Hide login form
+        emailTextField.isHidden = true
+        passwordTextField.isHidden = true
+        loginButton.isHidden = true
+        errorLabel.isHidden = true
+        
+        // Show logout button
+        logoutButton.isHidden = false
+        
+        // Keep the "Fit testers" text and back button visible
     }
 
     private func showManagedUsersSelection() {
@@ -464,12 +508,13 @@ class LoginViewController: UIViewController {
         recommendMasksButton.isHidden = false
         contributeDataButton.isHidden = false
         
-        // Hide login form
+        // Hide login form and authenticated state
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
         loginButton.isHidden = true
         errorLabel.isHidden = true
         managedUsersButton.isHidden = true
+        logoutButton.isHidden = true
         
         // Remove back button from navigation bar
         navigationItem.leftBarButtonItem = nil
