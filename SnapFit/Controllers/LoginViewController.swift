@@ -7,6 +7,8 @@ class LoginViewController: UIViewController {
     private var scrollView: UIScrollView!
     private var contentView: UIView!
     private var firstParagraphTextView: UITextView!
+    private var recommendMasksButton: UIButton!
+    private var contributeDataButton: UIButton!
     private var attentionParagraphTextView: UITextView!
     private var secondParagraphLabel: UILabel!
     private var emailTextField: UITextField!
@@ -22,6 +24,8 @@ class LoginViewController: UIViewController {
     private let offlineSyncManager: OfflineSyncManager
 
     private var managedUsers: [ManagedUser] = []
+    private var isShowingLoginForm = false
+    private var contributeButtonBottomConstraint: NSLayoutConstraint!
 
     init() {
         self.apiClient = APIClient(authService: authService)
@@ -41,13 +45,14 @@ class LoginViewController: UIViewController {
 
         // Check if user is already authenticated
         if authService.isAuthenticated {
+            showLoginForm()
             loadManagedUsers()
         }
     }
 
     // MARK: - Setup Methods
     private func setupUI() {
-        title = "SnapFit Login"
+        title = "SnapFit"
         view.backgroundColor = UIColor.systemBackground
 
         // Create scroll view
@@ -72,6 +77,28 @@ class LoginViewController: UIViewController {
         firstParagraphTextView.text = "Welcome to SnapFit! Find masks that would most likely fit your face — in a snap. Developed by Breathesafe LLC."
         firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(firstParagraphTextView)
+
+        // Create Recommend Me Masks button
+        recommendMasksButton = UIButton(type: .system)
+        recommendMasksButton.setTitle("Recommend Me Masks", for: .normal)
+        recommendMasksButton.backgroundColor = UIColor.systemGreen
+        recommendMasksButton.setTitleColor(UIColor.white, for: .normal)
+        recommendMasksButton.layer.cornerRadius = 8
+        recommendMasksButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        recommendMasksButton.translatesAutoresizingMaskIntoConstraints = false
+        recommendMasksButton.addTarget(self, action: #selector(recommendMasksButtonTapped), for: .touchUpInside)
+        contentView.addSubview(recommendMasksButton)
+
+        // Create Contribute Data button
+        contributeDataButton = UIButton(type: .system)
+        contributeDataButton.setTitle("Contribute Facial Measurement Data", for: .normal)
+        contributeDataButton.backgroundColor = UIColor.systemBlue
+        contributeDataButton.setTitleColor(UIColor.white, for: .normal)
+        contributeDataButton.layer.cornerRadius = 8
+        contributeDataButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        contributeDataButton.translatesAutoresizingMaskIntoConstraints = false
+        contributeDataButton.addTarget(self, action: #selector(contributeDataButtonTapped), for: .touchUpInside)
+        contentView.addSubview(contributeDataButton)
 
         // Create attention paragraph text view (with clickable URL)
         attentionParagraphTextView = UITextView()
@@ -177,10 +204,20 @@ class LoginViewController: UIViewController {
         managedUsersButton.addTarget(self, action: #selector(managedUsersButtonTapped(_:)), for: .touchUpInside)
         contentView.addSubview(managedUsersButton)
 
+        // Hide login form initially
+        attentionParagraphTextView.isHidden = true
+        secondParagraphLabel.isHidden = true
+        emailTextField.isHidden = true
+        passwordTextField.isHidden = true
+        loginButton.isHidden = true
+
         setupConstraints()
     }
 
     private func setupConstraints() {
+        // Create the bottom constraint for contribute button (used when main menu is shown)
+        contributeButtonBottomConstraint = contributeDataButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+        
         NSLayoutConstraint.activate([
             // Scroll view constraints
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -200,8 +237,21 @@ class LoginViewController: UIViewController {
             firstParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             firstParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
+            // Recommend Masks button
+            recommendMasksButton.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 40),
+            recommendMasksButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            recommendMasksButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            recommendMasksButton.heightAnchor.constraint(equalToConstant: 50),
+
+            // Contribute Data button
+            contributeDataButton.topAnchor.constraint(equalTo: recommendMasksButton.bottomAnchor, constant: 16),
+            contributeDataButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            contributeDataButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            contributeDataButton.heightAnchor.constraint(equalToConstant: 50),
+            contributeButtonBottomConstraint,
+
             // Attention paragraph text view
-            attentionParagraphTextView.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 20),
+            attentionParagraphTextView.topAnchor.constraint(equalTo: contributeDataButton.bottomAnchor, constant: 20),
             attentionParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             attentionParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
@@ -264,6 +314,28 @@ class LoginViewController: UIViewController {
     }
 
     // MARK: - Actions
+    @objc private func recommendMasksButtonTapped() {
+        let alert = UIAlertController(
+            title: "Coming Soon",
+            message: "This functionality will be added in the near future. Stay tuned! Questions? Please email info@breathesafe.xyz.",
+            preferredStyle: .alert
+        )
+        
+        // Add email action
+        alert.addAction(UIAlertAction(title: "Email Us", style: .default) { _ in
+            if let url = URL(string: "mailto:info@breathesafe.xyz") {
+                UIApplication.shared.open(url)
+            }
+        })
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    @objc private func contributeDataButtonTapped() {
+        showLoginForm()
+    }
+
     @objc private func loginButtonTapped(_ sender: UIButton) {
         // Dismiss keyboard when login button is tapped
         view.endEditing(true)
@@ -382,6 +454,76 @@ class LoginViewController: UIViewController {
 
     private func hideError() {
         errorLabel.isHidden = true
+    }
+
+    private func showLoginForm() {
+        isShowingLoginForm = true
+        
+        // Deactivate contribute button bottom constraint
+        contributeButtonBottomConstraint.isActive = false
+        
+        // Hide main menu buttons
+        recommendMasksButton.isHidden = true
+        contributeDataButton.isHidden = true
+        
+        // Show login form
+        attentionParagraphTextView.isHidden = false
+        secondParagraphLabel.isHidden = false
+        emailTextField.isHidden = false
+        passwordTextField.isHidden = false
+        loginButton.isHidden = false
+        
+        // Add back button to navigation bar
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Back",
+            style: .plain,
+            target: self,
+            action: #selector(backToMainMenuTapped)
+        )
+        
+        // Animate the transition
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+
+    @objc private func backToMainMenuTapped() {
+        showMainMenu()
+    }
+
+    private func showMainMenu() {
+        isShowingLoginForm = false
+        
+        // Activate contribute button bottom constraint
+        contributeButtonBottomConstraint.isActive = true
+        
+        // Show main menu buttons
+        recommendMasksButton.isHidden = false
+        contributeDataButton.isHidden = false
+        
+        // Hide login form
+        attentionParagraphTextView.isHidden = true
+        secondParagraphLabel.isHidden = true
+        emailTextField.isHidden = true
+        passwordTextField.isHidden = true
+        loginButton.isHidden = true
+        errorLabel.isHidden = true
+        managedUsersButton.isHidden = true
+        
+        // Remove back button from navigation bar
+        navigationItem.leftBarButtonItem = nil
+        
+        // Clear fields
+        emailTextField.text = ""
+        passwordTextField.text = ""
+        
+        // Dismiss keyboard
+        view.endEditing(true)
+        
+        // Animate the transition
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
     }
 }
 

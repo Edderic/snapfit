@@ -502,6 +502,11 @@ class FaceMeasurementViewController: UIViewController {
             })
         }
 
+        // Back to Main Menu
+        alert.addAction(UIAlertAction(title: "Back to Main Menu", style: .default) { [weak self] _ in
+            self?.dismiss(animated: true)
+        })
+
         // Logout
         alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
             self?.logout()
