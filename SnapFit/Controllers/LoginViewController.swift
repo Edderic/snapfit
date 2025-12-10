@@ -9,8 +9,6 @@ class LoginViewController: UIViewController {
     private var firstParagraphTextView: UITextView!
     private var recommendMasksButton: UIButton!
     private var contributeDataButton: UIButton!
-    private var attentionParagraphTextView: UITextView!
-    private var secondParagraphLabel: UILabel!
     private var emailTextField: UITextField!
     private var passwordTextField: UITextField!
     private var loginButton: UIButton!
@@ -65,7 +63,7 @@ class LoginViewController: UIViewController {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
-        // Create first paragraph text view
+        // Create first paragraph text view (supports clickable links)
         firstParagraphTextView = UITextView()
         firstParagraphTextView.isEditable = false
         firstParagraphTextView.isScrollEnabled = false
@@ -75,6 +73,11 @@ class LoginViewController: UIViewController {
         firstParagraphTextView.font = UIFont.systemFont(ofSize: 17)
         firstParagraphTextView.textColor = UIColor.label
         firstParagraphTextView.text = "Welcome to SnapFit! Find masks that would most likely fit your face — in a snap. Developed by Breathesafe LLC."
+        firstParagraphTextView.linkTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+        firstParagraphTextView.delegate = self
         firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(firstParagraphTextView)
 
@@ -99,53 +102,6 @@ class LoginViewController: UIViewController {
         contributeDataButton.translatesAutoresizingMaskIntoConstraints = false
         contributeDataButton.addTarget(self, action: #selector(contributeDataButtonTapped), for: .touchUpInside)
         contentView.addSubview(contributeDataButton)
-
-        // Create attention paragraph text view (with clickable URL)
-        attentionParagraphTextView = UITextView()
-        attentionParagraphTextView.isEditable = false
-        attentionParagraphTextView.isScrollEnabled = false
-        attentionParagraphTextView.backgroundColor = .clear
-        attentionParagraphTextView.textContainerInset = .zero
-        attentionParagraphTextView.textContainer.lineFragmentPadding = 0
-        attentionParagraphTextView.font = UIFont.systemFont(ofSize: 17)
-        attentionParagraphTextView.textColor = UIColor.label
-        attentionParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
-
-        // Set up clickable URLs in attention paragraph
-        let attentionParagraphText = "Attention: fit testers: Please contribute your data to improve this mask recommender. For more information, see the consent form at https://breathesafe.xyz/#/consent_form. If you have not registered, please register here: https://www.breathesafe.xyz/#/signin"
-        let attributedString = NSMutableAttributedString(string: attentionParagraphText)
-        
-        // Make consent form URL clickable
-        let consentFormUrlRange = (attentionParagraphText as NSString).range(of: "https://breathesafe.xyz/#/consent_form")
-        if consentFormUrlRange.location != NSNotFound {
-            attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormUrlRange)
-            attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: consentFormUrlRange)
-        }
-        
-        // Make registration URL clickable
-        let registrationUrlRange = (attentionParagraphText as NSString).range(of: "https://www.breathesafe.xyz/#/signin")
-        if registrationUrlRange.location != NSNotFound {
-            attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registrationUrlRange)
-            attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: registrationUrlRange)
-        }
-        
-        attentionParagraphTextView.attributedText = attributedString
-        attentionParagraphTextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
-            .underlineStyle: NSUnderlineStyle.single.rawValue
-        ]
-        attentionParagraphTextView.delegate = self
-        contentView.addSubview(attentionParagraphTextView)
-
-        // Create second paragraph label
-        secondParagraphLabel = UILabel()
-        secondParagraphLabel.text = "After a successful registration, please log in with your Breathesafe credentials:"
-        secondParagraphLabel.font = UIFont.systemFont(ofSize: 17)
-        secondParagraphLabel.textColor = UIColor.label
-        secondParagraphLabel.numberOfLines = 0
-        secondParagraphLabel.textAlignment = .left
-        secondParagraphLabel.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(secondParagraphLabel)
 
         // Create email text field
         emailTextField = UITextField()
@@ -205,8 +161,6 @@ class LoginViewController: UIViewController {
         contentView.addSubview(managedUsersButton)
 
         // Hide login form initially
-        attentionParagraphTextView.isHidden = true
-        secondParagraphLabel.isHidden = true
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
         loginButton.isHidden = true
@@ -250,18 +204,8 @@ class LoginViewController: UIViewController {
             contributeDataButton.heightAnchor.constraint(equalToConstant: 50),
             contributeButtonBottomConstraint,
 
-            // Attention paragraph text view
-            attentionParagraphTextView.topAnchor.constraint(equalTo: contributeDataButton.bottomAnchor, constant: 20),
-            attentionParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            attentionParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-
-            // Second paragraph label
-            secondParagraphLabel.topAnchor.constraint(equalTo: attentionParagraphTextView.bottomAnchor, constant: 20),
-            secondParagraphLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            secondParagraphLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-
-            // Email text field
-            emailTextField.topAnchor.constraint(equalTo: secondParagraphLabel.bottomAnchor, constant: 20),
+            // Email text field (positioned after first paragraph when login form is shown)
+            emailTextField.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 30),
             emailTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             emailTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 44),
@@ -459,6 +403,24 @@ class LoginViewController: UIViewController {
     private func showLoginForm() {
         isShowingLoginForm = true
         
+        // Update welcome text with clickable links
+        let loginText = "Fit testers: please contribute your data to improve this mask recommender. For more information, see the consent form at https://breathesafe.xyz/#/consent_form. If you have not registered, please register here: https://www.breathesafe.xyz/#/signin"
+        let attributedString = NSMutableAttributedString(string: loginText)
+        
+        // Make consent form URL clickable
+        let consentFormUrlRange = (loginText as NSString).range(of: "https://breathesafe.xyz/#/consent_form")
+        if consentFormUrlRange.location != NSNotFound {
+            attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormUrlRange)
+        }
+        
+        // Make registration URL clickable
+        let registrationUrlRange = (loginText as NSString).range(of: "https://www.breathesafe.xyz/#/signin")
+        if registrationUrlRange.location != NSNotFound {
+            attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registrationUrlRange)
+        }
+        
+        firstParagraphTextView.attributedText = attributedString
+        
         // Deactivate contribute button bottom constraint
         contributeButtonBottomConstraint.isActive = false
         
@@ -467,8 +429,6 @@ class LoginViewController: UIViewController {
         contributeDataButton.isHidden = true
         
         // Show login form
-        attentionParagraphTextView.isHidden = false
-        secondParagraphLabel.isHidden = false
         emailTextField.isHidden = false
         passwordTextField.isHidden = false
         loginButton.isHidden = false
@@ -494,6 +454,9 @@ class LoginViewController: UIViewController {
     private func showMainMenu() {
         isShowingLoginForm = false
         
+        // Restore welcome text
+        firstParagraphTextView.text = "Welcome to SnapFit! Find masks that would most likely fit your face — in a snap. Developed by Breathesafe LLC."
+        
         // Activate contribute button bottom constraint
         contributeButtonBottomConstraint.isActive = true
         
@@ -502,8 +465,6 @@ class LoginViewController: UIViewController {
         contributeDataButton.isHidden = false
         
         // Hide login form
-        attentionParagraphTextView.isHidden = true
-        secondParagraphLabel.isHidden = true
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
         loginButton.isHidden = true
