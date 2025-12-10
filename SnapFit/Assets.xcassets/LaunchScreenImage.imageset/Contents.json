@@ -6,10 +6,12 @@
       "scale" : "1x"
     },
     {
+      "filename" : "snapfit-launch-screen.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "snapfit-launch-screen.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
