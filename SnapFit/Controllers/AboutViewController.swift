@@ -6,7 +6,10 @@ class AboutViewController: UIViewController {
     // MARK: - UI Elements
     private var scrollView: UIScrollView!
     private var contentView: UIView!
-    private var contentTextView: UITextView!
+    private var headerTextView: UITextView!
+    private var airborneImageView: UIImageView!
+    private var captionLabel: UILabel!
+    private var bodyTextView: UITextView!
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -37,22 +40,35 @@ class AboutViewController: UIViewController {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
-        // Create content text view
-        contentTextView = UITextView()
-        contentTextView.isEditable = false
-        contentTextView.isScrollEnabled = false
-        contentTextView.backgroundColor = .clear
-        contentTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        contentTextView.textContainer.lineFragmentPadding = 0
-        contentTextView.translatesAutoresizingMaskIntoConstraints = false
-        contentTextView.delegate = self
+        // Create header text view (content before image)
+        headerTextView = UITextView()
+        headerTextView.isEditable = false
+        headerTextView.isScrollEnabled = false
+        headerTextView.backgroundColor = .clear
+        headerTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        headerTextView.textContainer.lineFragmentPadding = 0
+        headerTextView.translatesAutoresizingMaskIntoConstraints = false
+        headerTextView.delegate = self
 
-        // Create attributed string with formatted headlines
-        let content = """
+        // Create header content
+        let headerContent = """
 Air Is Everywhere — And So Are Tiny Particles
 
-Air isn't just empty space — it's full of tiny particles called aerosols that can stay suspended for minutes to hours. These particles can carry viruses, bacteria, mold, and pollutants like smoke and exhaust fine particulates. Aerosolized pathogens are a major way respiratory diseases spread from person to person through breathing, talking, coughing, and sneezing (https://en.wikipedia.org/wiki/Transmission_of_COVID-19).
+Air isn't just empty space — it's full of tiny particles called aerosols that can stay suspended for minutes to hours. These particles can carry viruses, bacteria, mold, and pollutants like smoke and exhaust fine particulates. Aerosolized pathogens are a major way respiratory diseases spread from person to person through breathing, talking, coughing, and sneezing.
+"""
 
+        // Create body text view (content after image)
+        bodyTextView = UITextView()
+        bodyTextView.isEditable = false
+        bodyTextView.isScrollEnabled = false
+        bodyTextView.backgroundColor = .clear
+        bodyTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        bodyTextView.textContainer.lineFragmentPadding = 0
+        bodyTextView.translatesAutoresizingMaskIntoConstraints = false
+        bodyTextView.delegate = self
+
+        // Create body content
+        let bodyContent = """
 The air you breathe matters more than many people realize:
 
 • People inhale many thousands of liters of air every day, far more than the amount of water we usually drink, making healthy air exposure critical. (https://en.wikipedia.org/wiki/Tidal_volume)
@@ -87,52 +103,102 @@ Using a quick facial scan, SnapFit recommends masks that are most likely to fit 
 Better fit means better protection—for you and the people around you.
 """
 
-        let attributedString = NSMutableAttributedString(string: content)
+        // Create and configure image view
+        airborneImageView = UIImageView()
+        airborneImageView.image = UIImage(named: "AirborneTransmissionImage")
+        airborneImageView.contentMode = .scaleAspectFit
+        airborneImageView.translatesAutoresizingMaskIntoConstraints = false
+        airborneImageView.isUserInteractionEnabled = true
+        
+        // Add tap gesture to image
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
+        airborneImageView.addGestureRecognizer(tapGesture)
+        
+        // Create caption label
+        captionLabel = UILabel()
+        captionLabel.text = "Phases involved in airborne transmission of respiratory viruses. Credit: From Wang et al., 'Airborne transmission of respiratory viruses' (https://doi.org/10.1126/science.abd9149). N.CARY/SCIENCE"
+        captionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        captionLabel.textColor = UIColor.secondaryLabel
+        captionLabel.numberOfLines = 0
+        captionLabel.textAlignment = .center
+        captionLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        // Set default font for all text
+        // Format header content
+        let headerAttributedString = NSMutableAttributedString(string: headerContent)
+        let bodyAttributedString = NSMutableAttributedString(string: bodyContent)
+        
         let defaultFont = UIFont.systemFont(ofSize: 17)
-        attributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: attributedString.length))
-        attributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: attributedString.length))
-
-        // Format headlines (bold and larger)
         let headlineFont = UIFont.boldSystemFont(ofSize: 24)
-        let headlines = ["Air Is Everywhere — And So Are Tiny Particles", "Why Fit Matters", "Fit Is Personal", "How SnapFit Helps"]
-
-        for headline in headlines {
-            let range = (content as NSString).range(of: headline)
+        
+        // Format header
+        headerAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: headerAttributedString.length))
+        headerAttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: headerAttributedString.length))
+        
+        // Format header headline
+        let headerHeadline = "Air Is Everywhere — And So Are Tiny Particles"
+        let headerHeadlineRange = (headerContent as NSString).range(of: headerHeadline)
+        if headerHeadlineRange.location != NSNotFound {
+            headerAttributedString.addAttribute(.font, value: headlineFont, range: headerHeadlineRange)
+        }
+        
+        // Add link to the sentence about aerosolized pathogens
+        let aerosolSentence = "Aerosolized pathogens are a major way respiratory diseases spread from person to person through breathing, talking, coughing, and sneezing."
+        let aerosolSentenceRange = (headerContent as NSString).range(of: aerosolSentence)
+        if aerosolSentenceRange.location != NSNotFound {
+            let scienceLink = "https://www.science.org/doi/10.1126/science.abd9149"
+            headerAttributedString.addAttribute(.link, value: scienceLink, range: aerosolSentenceRange)
+            headerAttributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: aerosolSentenceRange)
+        }
+        
+        // Format body
+        bodyAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: bodyAttributedString.length))
+        bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: bodyAttributedString.length))
+        
+        // Format body headlines
+        let bodyHeadlines = ["Why Fit Matters", "Fit Is Personal", "How SnapFit Helps"]
+        for headline in bodyHeadlines {
+            let range = (bodyContent as NSString).range(of: headline)
             if range.location != NSNotFound {
-                attributedString.addAttribute(.font, value: headlineFont, range: range)
+                bodyAttributedString.addAttribute(.font, value: headlineFont, range: range)
             }
         }
-
-        // Add clickable links
-        let links = [
-            "https://en.wikipedia.org/wiki/Transmission_of_COVID-19",
+        
+        // Add links in body
+        let bodyLinks = [
             "https://en.wikipedia.org/wiki/Tidal_volume",
             "https://en.wikipedia.org/wiki/Pulmonary_alveolus"
         ]
-
-        for link in links {
-            let range = (content as NSString).range(of: link)
+        for link in bodyLinks {
+            let range = (bodyContent as NSString).range(of: link)
             if range.location != NSNotFound {
-                attributedString.addAttribute(.link, value: link, range: range)
-                attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: range)
+                bodyAttributedString.addAttribute(.link, value: link, range: range)
+                bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: range)
             }
         }
-
-        // Emphasize "fitted" in the last sentence
-        let fittedRange = (content as NSString).range(of: "fitted")
+        
+        // Emphasize "fitted"
+        let fittedRange = (bodyContent as NSString).range(of: "fitted")
         if fittedRange.location != NSNotFound {
             let boldFont = UIFont.boldSystemFont(ofSize: 17)
-            attributedString.addAttribute(.font, value: boldFont, range: fittedRange)
+            bodyAttributedString.addAttribute(.font, value: boldFont, range: fittedRange)
         }
-
-        contentTextView.attributedText = attributedString
-        contentTextView.linkTextAttributes = [
+        
+        headerTextView.attributedText = headerAttributedString
+        headerTextView.linkTextAttributes = [
             .foregroundColor: UIColor.systemBlue,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
-        contentView.addSubview(contentTextView)
+        
+        bodyTextView.attributedText = bodyAttributedString
+        bodyTextView.linkTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+        
+        contentView.addSubview(headerTextView)
+        contentView.addSubview(airborneImageView)
+        contentView.addSubview(captionLabel)
+        contentView.addSubview(bodyTextView)
 
         setupConstraints()
     }
@@ -152,17 +218,40 @@ Better fit means better protection—for you and the people around you.
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
-            // Content text view
-            contentTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            contentTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            contentTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            contentTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            // Header text view
+            headerTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            headerTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            headerTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            // Airborne image view
+            airborneImageView.topAnchor.constraint(equalTo: headerTextView.bottomAnchor, constant: 20),
+            airborneImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            airborneImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            airborneImageView.heightAnchor.constraint(equalTo: airborneImageView.widthAnchor, multiplier: 0.75), // Maintain aspect ratio
+            
+            // Caption label
+            captionLabel.topAnchor.constraint(equalTo: airborneImageView.bottomAnchor, constant: 8),
+            captionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            captionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            // Body text view
+            bodyTextView.topAnchor.constraint(equalTo: captionLabel.bottomAnchor, constant: 20),
+            bodyTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            bodyTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            bodyTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
 
     // MARK: - Actions
     @objc private func backButtonTapped() {
         navigationController?.popViewController(animated: true)
+    }
+    
+    @objc private func imageTapped() {
+        // Create a full-screen image viewer for zooming
+        let imageViewerVC = ImageViewerViewController(image: airborneImageView.image)
+        imageViewerVC.modalPresentationStyle = .fullScreen
+        present(imageViewerVC, animated: true)
     }
 }
 

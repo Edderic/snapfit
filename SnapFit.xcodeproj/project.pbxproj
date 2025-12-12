@@ -23,6 +23,7 @@
 		DA5555472E823E8700757129 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555402E823E8700757129 /* AuthenticationService.swift */; };
 		DA5555492E823EA800757129 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555482E823EA800757129 /* LoginViewController.swift */; };
 		DA55554A2E823EB800757129 /* AboutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55554B2E823EB800757129 /* AboutViewController.swift */; };
+		DA55554D2E823ED800757129 /* ImageViewerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55554E2E823ED800757129 /* ImageViewerViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		DA5555482E823EA800757129 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		DA55554B2E823EB800757129 /* AboutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutViewController.swift; sourceTree = "<group>"; };
 		DA55554C2E823EC800757129 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DA55554E2E823ED800757129 /* ImageViewerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +97,7 @@
 			children = (
 				DA5555482E823EA800757129 /* LoginViewController.swift */,
 				DA55554B2E823EB800757129 /* AboutViewController.swift */,
+				DA55554E2E823ED800757129 /* ImageViewerViewController.swift */,
 				A1234567890123456789012F /* FaceMeasurementViewController.swift */,
 			);
 			path = Controllers;
@@ -209,6 +212,7 @@
 			files = (
 				DA5555492E823EA800757129 /* LoginViewController.swift in Sources */,
 				DA55554A2E823EB800757129 /* AboutViewController.swift in Sources */,
+				DA55554D2E823ED800757129 /* ImageViewerViewController.swift in Sources */,
 				A1234567890123456789012E /* FaceMeasurementViewController.swift in Sources */,
 				A1234567890123456789013A /* MeasurementEngine.swift in Sources */,
 				A1234567890123456789013C /* FacialLandmarks.swift in Sources */,
