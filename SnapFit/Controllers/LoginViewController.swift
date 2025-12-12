@@ -4,6 +4,7 @@ import UIKit
 class LoginViewController: UIViewController {
 
     // MARK: - UI Elements
+    private var backgroundImageView: UIImageView!
     private var scrollView: UIScrollView!
     private var contentView: UIView!
     private var firstParagraphTextView: UITextView!
@@ -53,7 +54,16 @@ class LoginViewController: UIViewController {
     // MARK: - Setup Methods
     private func setupUI() {
         title = "SnapFit"
-        view.backgroundColor = UIColor.systemBackground
+        // Set background color using hex #2F80ED
+        view.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+
+        // Create background image view
+        backgroundImageView = UIImageView()
+        backgroundImageView.image = UIImage(named: "HomeScreenBackgroundImage")
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(backgroundImageView)
 
         // Create scroll view
         scrollView = UIScrollView()
@@ -66,27 +76,30 @@ class LoginViewController: UIViewController {
         scrollView.addSubview(contentView)
 
         // Create first paragraph text view (supports clickable links)
+        // Initially hidden, only shown when login form is displayed
         firstParagraphTextView = UITextView()
         firstParagraphTextView.isEditable = false
         firstParagraphTextView.isScrollEnabled = false
-        firstParagraphTextView.backgroundColor = .clear
-        firstParagraphTextView.textContainerInset = .zero
+        firstParagraphTextView.backgroundColor = UIColor(white: 1.0, alpha: 0.9)
+        firstParagraphTextView.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         firstParagraphTextView.textContainer.lineFragmentPadding = 0
         firstParagraphTextView.font = UIFont.systemFont(ofSize: 17)
         firstParagraphTextView.textColor = UIColor.label
-        firstParagraphTextView.text = "Welcome to SnapFit! Find masks that would most likely fit your face — in a snap. Developed by Breathesafe LLC."
+        firstParagraphTextView.text = ""
         firstParagraphTextView.linkTextAttributes = [
             .foregroundColor: UIColor.systemBlue,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
         firstParagraphTextView.delegate = self
+        firstParagraphTextView.layer.cornerRadius = 8
         firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
+        firstParagraphTextView.isHidden = true
         contentView.addSubview(firstParagraphTextView)
 
-        // Create About button
+        // Create About button with semi-transparent background
         aboutButton = UIButton(type: .system)
         aboutButton.setTitle("About", for: .normal)
-        aboutButton.backgroundColor = UIColor.systemGray
+        aboutButton.backgroundColor = UIColor(white: 0.5, alpha: 0.7)
         aboutButton.setTitleColor(UIColor.white, for: .normal)
         aboutButton.layer.cornerRadius = 8
         aboutButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -94,10 +107,10 @@ class LoginViewController: UIViewController {
         aboutButton.addTarget(self, action: #selector(aboutButtonTapped), for: .touchUpInside)
         contentView.addSubview(aboutButton)
 
-        // Create Recommend Me Masks button
+        // Create Recommend Me Masks button with semi-transparent background
         recommendMasksButton = UIButton(type: .system)
         recommendMasksButton.setTitle("Recommend Me Masks", for: .normal)
-        recommendMasksButton.backgroundColor = UIColor.systemGreen
+        recommendMasksButton.backgroundColor = UIColor(red: 0.2, green: 0.8, blue: 0.4, alpha: 0.8)
         recommendMasksButton.setTitleColor(UIColor.white, for: .normal)
         recommendMasksButton.layer.cornerRadius = 8
         recommendMasksButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -105,10 +118,10 @@ class LoginViewController: UIViewController {
         recommendMasksButton.addTarget(self, action: #selector(recommendMasksButtonTapped), for: .touchUpInside)
         contentView.addSubview(recommendMasksButton)
 
-        // Create Contribute Data button
+        // Create Contribute Data button with orange semi-transparent background
         contributeDataButton = UIButton(type: .system)
         contributeDataButton.setTitle("Contribute Facial Measurement Data", for: .normal)
-        contributeDataButton.backgroundColor = UIColor.systemBlue
+        contributeDataButton.backgroundColor = UIColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 0.85)
         contributeDataButton.setTitleColor(UIColor.white, for: .normal)
         contributeDataButton.layer.cornerRadius = 8
         contributeDataButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -137,10 +150,10 @@ class LoginViewController: UIViewController {
         passwordTextField.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(passwordTextField)
 
-        // Create login button
+        // Create login button with orange background
         loginButton = UIButton(type: .system)
         loginButton.setTitle("Login", for: .normal)
-        loginButton.backgroundColor = UIColor.systemBlue
+        loginButton.backgroundColor = UIColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
         loginButton.setTitleColor(UIColor.white, for: .normal)
         loginButton.layer.cornerRadius = 8
         loginButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -201,6 +214,12 @@ class LoginViewController: UIViewController {
         contributeButtonBottomConstraint = contributeDataButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         
         NSLayoutConstraint.activate([
+            // Background image view - fills entire screen
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
             // Scroll view constraints
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -213,44 +232,44 @@ class LoginViewController: UIViewController {
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
 
-            // First paragraph text view
+            // First paragraph text view (hidden by default, shown when login form is displayed)
             firstParagraphTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             firstParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             firstParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
-            // About button
-            aboutButton.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 40),
-            aboutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            aboutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            aboutButton.heightAnchor.constraint(equalToConstant: 44),
-
-            // Recommend Masks button
-            recommendMasksButton.topAnchor.constraint(equalTo: aboutButton.bottomAnchor, constant: 16),
-            recommendMasksButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            recommendMasksButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            recommendMasksButton.heightAnchor.constraint(equalToConstant: 44),
-
-            // Contribute Data button
-            contributeDataButton.topAnchor.constraint(equalTo: recommendMasksButton.bottomAnchor, constant: 16),
+            // Contribute Data button - positioned at bottom
             contributeDataButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             contributeDataButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             contributeDataButton.heightAnchor.constraint(equalToConstant: 44),
             contributeButtonBottomConstraint,
 
-            // Email text field (positioned after first paragraph when login form is shown)
-            emailTextField.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 30),
+            // Recommend Masks button - above Contribute button
+            recommendMasksButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            recommendMasksButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            recommendMasksButton.heightAnchor.constraint(equalToConstant: 44),
+            recommendMasksButton.bottomAnchor.constraint(equalTo: contributeDataButton.topAnchor, constant: -16),
+
+            // About button - above Recommend Masks button
+            aboutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            aboutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            aboutButton.heightAnchor.constraint(equalToConstant: 44),
+            aboutButton.bottomAnchor.constraint(equalTo: recommendMasksButton.topAnchor, constant: -16),
+
+            // Email text field - positioned higher to avoid keyboard covering login button
+            emailTextField.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -100),
             emailTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             emailTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 44),
 
-            // Password text field
+            // Password text field - below Email field
             passwordTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 16),
             passwordTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             passwordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             passwordTextField.heightAnchor.constraint(equalToConstant: 44),
 
-            // Login button
+            // Login button - below Password field
             loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 24),
             loginButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             loginButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
@@ -260,19 +279,18 @@ class LoginViewController: UIViewController {
             activityIndicator.centerXAnchor.constraint(equalTo: loginButton.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: loginButton.centerYAnchor),
 
-            // Error label
-            errorLabel.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 16),
+            // Error label - hidden, errors now shown in alerts
             errorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             errorLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            errorLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
 
             // Managed users button
-            managedUsersButton.topAnchor.constraint(equalTo: errorLabel.bottomAnchor, constant: 24),
             managedUsersButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             managedUsersButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             managedUsersButton.heightAnchor.constraint(equalToConstant: 50),
+            managedUsersButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -16),
 
             // Logout button
-            logoutButton.topAnchor.constraint(equalTo: managedUsersButton.bottomAnchor, constant: 16),
             logoutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             logoutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             logoutButton.heightAnchor.constraint(equalToConstant: 50),
@@ -471,16 +489,20 @@ class LoginViewController: UIViewController {
     }
 
     private func showError(_ message: String) {
-        errorLabel.text = message
-        errorLabel.isHidden = false
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     private func hideError() {
-        errorLabel.isHidden = true
+        // No longer needed as errors are shown in alerts
     }
 
     private func showLoginForm() {
         isShowingLoginForm = true
+        
+        // Hide background image to show solid #2F80ED color
+        backgroundImageView.isHidden = true
         
         // Update welcome text with clickable links
         let loginText = "Fit testers: please contribute your data to improve this mask recommender. For more information, see the consent form at https://breathesafe.xyz/#/consent_form. If you have not registered, please register here: https://www.breathesafe.xyz/#/signin"
@@ -499,6 +521,7 @@ class LoginViewController: UIViewController {
         }
         
         firstParagraphTextView.attributedText = attributedString
+        firstParagraphTextView.isHidden = false
         
         // Deactivate contribute button bottom constraint
         contributeButtonBottomConstraint.isActive = false
@@ -534,8 +557,11 @@ class LoginViewController: UIViewController {
     private func showMainMenu() {
         isShowingLoginForm = false
         
-        // Restore welcome text
-        firstParagraphTextView.text = "Welcome to SnapFit! Find masks that would most likely fit your face — in a snap. Developed by Breathesafe LLC."
+        // Show background image again
+        backgroundImageView.isHidden = false
+        
+        // Hide welcome text on main menu
+        firstParagraphTextView.isHidden = true
         
         // Activate contribute button bottom constraint
         contributeButtonBottomConstraint.isActive = true
