@@ -2,23 +2,23 @@ import UIKit
 
 /// View controller displaying information about SnapFit and mask fitting
 class AboutViewController: UIViewController {
-    
+
     // MARK: - UI Elements
     private var scrollView: UIScrollView!
     private var contentView: UIView!
     private var contentTextView: UITextView!
-    
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
     }
-    
+
     // MARK: - Setup Methods
     private func setupUI() {
         title = "About SnapFit"
         view.backgroundColor = UIColor.systemBackground
-        
+
         // Add back button
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             title: "Back",
@@ -26,17 +26,17 @@ class AboutViewController: UIViewController {
             target: self,
             action: #selector(backButtonTapped)
         )
-        
+
         // Create scroll view
         scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
-        
+
         // Create content view
         contentView = UIView()
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
-        
+
         // Create content text view
         contentTextView = UITextView()
         contentTextView.isEditable = false
@@ -46,12 +46,12 @@ class AboutViewController: UIViewController {
         contentTextView.textContainer.lineFragmentPadding = 0
         contentTextView.translatesAutoresizingMaskIntoConstraints = false
         contentTextView.delegate = self
-        
+
         // Create attributed string with formatted headlines
         let content = """
 Air Is Everywhere — And So Are Tiny Particles
 
-Air isn't just empty space — it's full of tiny particles called aerosols that can stay suspended for minutes to hours. These particles can carry viruses, bacteria, mold, and pollutants like smoke and exhaust fine particulates. Aerosolized pathogens are a major way respiratory diseases spread from person to person through breathing, talking, coughing, and sneezing (https://en.wikipedia.org/wiki/Transmission_of_COVID-19?utm_source=chatgpt.com).
+Air isn't just empty space — it's full of tiny particles called aerosols that can stay suspended for minutes to hours. These particles can carry viruses, bacteria, mold, and pollutants like smoke and exhaust fine particulates. Aerosolized pathogens are a major way respiratory diseases spread from person to person through breathing, talking, coughing, and sneezing (https://en.wikipedia.org/wiki/Transmission_of_COVID-19).
 
 The air you breathe matters more than many people realize:
 
@@ -86,32 +86,32 @@ Using a quick facial scan, SnapFit recommends masks that are most likely to fit 
 
 Better fit means better protection—for you and the people around you.
 """
-        
+
         let attributedString = NSMutableAttributedString(string: content)
-        
+
         // Set default font for all text
         let defaultFont = UIFont.systemFont(ofSize: 17)
         attributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: attributedString.length))
         attributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: attributedString.length))
-        
+
         // Format headlines (bold and larger)
         let headlineFont = UIFont.boldSystemFont(ofSize: 24)
         let headlines = ["Air Is Everywhere — And So Are Tiny Particles", "Why Fit Matters", "Fit Is Personal", "How SnapFit Helps"]
-        
+
         for headline in headlines {
             let range = (content as NSString).range(of: headline)
             if range.location != NSNotFound {
                 attributedString.addAttribute(.font, value: headlineFont, range: range)
             }
         }
-        
+
         // Add clickable links
         let links = [
-            "https://en.wikipedia.org/wiki/Transmission_of_COVID-19?utm_source=chatgpt.com",
+            "https://en.wikipedia.org/wiki/Transmission_of_COVID-19",
             "https://en.wikipedia.org/wiki/Tidal_volume",
             "https://en.wikipedia.org/wiki/Pulmonary_alveolus"
         ]
-        
+
         for link in links {
             let range = (content as NSString).range(of: link)
             if range.location != NSNotFound {
@@ -119,24 +119,24 @@ Better fit means better protection—for you and the people around you.
                 attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: range)
             }
         }
-        
+
         // Emphasize "fitted" in the last sentence
         let fittedRange = (content as NSString).range(of: "fitted")
         if fittedRange.location != NSNotFound {
             let boldFont = UIFont.boldSystemFont(ofSize: 17)
             attributedString.addAttribute(.font, value: boldFont, range: fittedRange)
         }
-        
+
         contentTextView.attributedText = attributedString
         contentTextView.linkTextAttributes = [
             .foregroundColor: UIColor.systemBlue,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
         contentView.addSubview(contentTextView)
-        
+
         setupConstraints()
     }
-    
+
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // Scroll view constraints
@@ -144,14 +144,14 @@ Better fit means better protection—for you and the people around you.
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
+
             // Content view constraints
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
+
             // Content text view
             contentTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             contentTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
@@ -159,7 +159,7 @@ Better fit means better protection—for you and the people around you.
             contentTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
-    
+
     // MARK: - Actions
     @objc private func backButtonTapped() {
         navigationController?.popViewController(animated: true)
