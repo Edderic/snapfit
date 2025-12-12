@@ -11,6 +11,13 @@ class AboutViewController: UIViewController {
     private var captionLabel: UILabel!
     private var middleTextView: UITextView!
     private var airBreathedImageView: UIImageView!
+    private var middle2TextView: UITextView!
+    private var handsLungsImageView: UIImageView!
+    private var middle3TextView: UITextView!
+    private var qlftImageView: UIImageView!
+    private var qlftCaptionLabel: UILabel!
+    private var qnftImageView: UIImageView!
+    private var qnftCaptionLabel: UILabel!
     private var bodyTextView: UITextView!
 
     // MARK: - Lifecycle
@@ -76,7 +83,55 @@ The air you breathe matters more than many people realize:
 • People inhale many thousands of liters of air every day, far more than the amount of water we usually drink, making healthy air exposure critical. (https://en.wikipedia.org/wiki/Tidal_volume)
 """
 
-        // Create body text view (content after second image)
+        // Create middle2 text view (content between second and third image)
+        middle2TextView = UITextView()
+        middle2TextView.isEditable = false
+        middle2TextView.isScrollEnabled = false
+        middle2TextView.backgroundColor = .clear
+        middle2TextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        middle2TextView.textContainer.lineFragmentPadding = 0
+        middle2TextView.translatesAutoresizingMaskIntoConstraints = false
+        middle2TextView.delegate = self
+
+        // Create middle2 content
+        let middle2Content = """
+• The lungs have an enormous internal surface area — about 70–100 m² — to transfer oxygen to the blood. This large surface makes them efficient for gas exchange but also vulnerable to airborne contaminants. Your lungs expose an area about the size of a tennis court to the air you breathe — every day.
+"""
+
+        // Create middle3 text view (content between third and fourth image)
+        middle3TextView = UITextView()
+        middle3TextView.isEditable = false
+        middle3TextView.isScrollEnabled = false
+        middle3TextView.backgroundColor = .clear
+        middle3TextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        middle3TextView.textContainer.lineFragmentPadding = 0
+        middle3TextView.translatesAutoresizingMaskIntoConstraints = false
+        middle3TextView.delegate = self
+
+        // Create middle3 content
+        let middle3Content = """
+
+We wash our hands. We regulate drinking water to high standards. Yet the largest interface between your body and the environment is your lungs. We should give the air we inhale the same respect — especially in crowded or poorly ventilated places where airborne particles accumulate. Masking using a fitted respirator is one of the best ways to protect oneself (and others if you are sick).
+
+
+Why Fit Matters
+
+High-quality respirators like N95s can filter over 95% of airborne particles—but only if they fit your face well.
+
+Even small gaps between a mask and your face let unfiltered air leak in, dramatically reducing protection. A well-fitted respirator can provide 10–1000× more protection than a poorly fitting one, lowering the dose of airborne pathogens you inhale and reducing the risk of infection.
+
+Fit Is Personal
+
+Mask fit isn't one-size-fits-all. Face shape, size, nose measurements, and movement all affect how well a mask seals, and depends on the design of the mask. Studies show that:
+
+• Some people need to try multiple masks to find one that fits
+• Fit success varies by facial features, age, sex, and ethnicity
+• Children and people with smaller or non-average faces often have very limited options
+
+Professional fit testing exists—but it can be expensive, time-consuming, and/or inaccessible for most people.
+"""
+
+        // Create body text view (content after fourth image)
         bodyTextView = UITextView()
         bodyTextView.isEditable = false
         bodyTextView.isScrollEnabled = false
@@ -88,32 +143,12 @@ The air you breathe matters more than many people realize:
 
         // Create body content
         let bodyContent = """
-• The lungs have an enormous internal surface area — about 70–100 m² — to transfer oxygen to the blood. This large surface makes them efficient for gas exchange but also vulnerable to airborne contaminants. Your lungs expose an area about the size of a tennis court to the air you breathe — every day.
-
-We obsess (correctly) over hand hygiene. We regulate drinking water to high standards. Yet the largest interface between your body and the environment is your lungs. We should give the air we inhale the same respect — especially in crowded or poorly ventilated places where airborne particles accumulate. Masking using a fitted respirator is one of the best ways to protect oneself (and others if you are sick).
-
-
-Why Fit Matters
-
-High-quality respirators like N95s can filter over 95% of airborne particles—but only if they fit your face well.
-
-Even small gaps between a mask and your face let unfiltered air leak in, dramatically reducing protection. A well-fitted respirator can provide 10–1000× more protection than a poorly fitting one, lowering the dose of airborne pathogens you inhale and reducing the risk of infection.
-
-Fit Is Personal
-
-Mask fit isn't one-size-fits-all. Face shape, size, nose bridge height, and movement all affect how well a mask seals. Studies show that:
-
-• Many people need to try multiple masks to find one that fits
-• Fit success varies by facial features, age, sex, and ethnicity
-• Children and people with smaller or non-average faces often have very limited options
-
-Professional fit testing exists—but it's expensive, time-consuming, and inaccessible for most people.
 
 How SnapFit Helps
 
 SnapFit makes better mask fit accessible.
 
-Using a quick facial scan, SnapFit recommends masks that are most likely to fit your face, based on real fit data and mask performance—not guesswork. No trial-and-error. No specialized equipment.
+Using a quick facial scan, SnapFit recommends masks that are most likely to fit your face, based on real fit data and mask performance—not guesswork, decreasing the need for trial-and-error and specialized equipment. It strikes a balance between accuracy and accessibility.
 
 Better fit means better protection—for you and the people around you.
 """
@@ -140,7 +175,40 @@ Better fit means better protection—for you and the people around you.
         let tapGesture2 = UITapGestureRecognizer(target: self, action: #selector(airBreathedImageTapped))
         airBreathedImageView.addGestureRecognizer(tapGesture2)
 
-        // Create caption label
+        // Create and configure third image view (hands vs lungs)
+        handsLungsImageView = UIImageView()
+        handsLungsImageView.image = UIImage(named: "HandsLungsSurfaceImage")
+        handsLungsImageView.contentMode = .scaleAspectFit
+        handsLungsImageView.translatesAutoresizingMaskIntoConstraints = false
+        handsLungsImageView.isUserInteractionEnabled = true
+
+        // Add tap gesture to third image
+        let tapGesture3 = UITapGestureRecognizer(target: self, action: #selector(handsLungsImageTapped))
+        handsLungsImageView.addGestureRecognizer(tapGesture3)
+
+        // Create and configure fourth image view (QLFT)
+        qlftImageView = UIImageView()
+        qlftImageView.image = UIImage(named: "QualitativeFitTestImage")
+        qlftImageView.contentMode = .scaleAspectFit
+        qlftImageView.translatesAutoresizingMaskIntoConstraints = false
+        qlftImageView.isUserInteractionEnabled = true
+
+        // Add tap gesture to fourth image
+        let tapGesture4 = UITapGestureRecognizer(target: self, action: #selector(qlftImageTapped))
+        qlftImageView.addGestureRecognizer(tapGesture4)
+
+        // Create and configure fifth image view (QNFT)
+        qnftImageView = UIImageView()
+        qnftImageView.image = UIImage(named: "QuantitativeFitTestImage")
+        qnftImageView.contentMode = .scaleAspectFit
+        qnftImageView.translatesAutoresizingMaskIntoConstraints = false
+        qnftImageView.isUserInteractionEnabled = true
+
+        // Add tap gesture to fifth image
+        let tapGesture5 = UITapGestureRecognizer(target: self, action: #selector(qnftImageTapped))
+        qnftImageView.addGestureRecognizer(tapGesture5)
+
+        // Create caption label for first image (airborne transmission)
         captionLabel = UILabel()
         captionLabel.text = "Phases involved in airborne transmission of respiratory viruses. Credit: From Wang et al., 'Airborne transmission of respiratory viruses' (https://doi.org/10.1126/science.abd9149). N.CARY/SCIENCE"
         captionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
@@ -149,9 +217,29 @@ Better fit means better protection—for you and the people around you.
         captionLabel.textAlignment = .center
         captionLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        // Create caption label for QLFT image
+        qlftCaptionLabel = UILabel()
+        qlftCaptionLabel.text = "Qualitative Fit Testing"
+        qlftCaptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        qlftCaptionLabel.textColor = UIColor.secondaryLabel
+        qlftCaptionLabel.numberOfLines = 0
+        qlftCaptionLabel.textAlignment = .center
+        qlftCaptionLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        // Create caption label for QNFT image
+        qnftCaptionLabel = UILabel()
+        qnftCaptionLabel.text = "Quantitative Fit Testing"
+        qnftCaptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        qnftCaptionLabel.textColor = UIColor.secondaryLabel
+        qnftCaptionLabel.numberOfLines = 0
+        qnftCaptionLabel.textAlignment = .center
+        qnftCaptionLabel.translatesAutoresizingMaskIntoConstraints = false
+
         // Format header content
         let headerAttributedString = NSMutableAttributedString(string: headerContent)
         let middleAttributedString = NSMutableAttributedString(string: middleContent)
+        let middle2AttributedString = NSMutableAttributedString(string: middle2Content)
+        let middle3AttributedString = NSMutableAttributedString(string: middle3Content)
         let bodyAttributedString = NSMutableAttributedString(string: bodyContent)
 
         let defaultFont = UIFont.systemFont(ofSize: 17)
@@ -189,6 +277,23 @@ Better fit means better protection—for you and the people around you.
             middleAttributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: tidalVolumeRange)
         }
 
+        // Format middle2 content
+        middle2AttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: middle2AttributedString.length))
+        middle2AttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: middle2AttributedString.length))
+
+        // Format middle3 content
+        middle3AttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: middle3AttributedString.length))
+        middle3AttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: middle3AttributedString.length))
+
+        // Format middle3 headlines
+        let middle3Headlines = ["Why Fit Matters", "Fit Is Personal"]
+        for headline in middle3Headlines {
+            let range = (middle3Content as NSString).range(of: headline)
+            if range.location != NSNotFound {
+                middle3AttributedString.addAttribute(.font, value: headlineFont, range: range)
+            }
+        }
+
         // Format body
         bodyAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: bodyAttributedString.length))
         bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: bodyAttributedString.length))
@@ -200,14 +305,6 @@ Better fit means better protection—for you and the people around you.
             if range.location != NSNotFound {
                 bodyAttributedString.addAttribute(.font, value: headlineFont, range: range)
             }
-        }
-
-        // Add pulmonary alveolus link in body
-        let alveoluLink = "https://en.wikipedia.org/wiki/Pulmonary_alveolus"
-        let alveoluRange = (bodyContent as NSString).range(of: alveoluLink)
-        if alveoluRange.location != NSNotFound {
-            bodyAttributedString.addAttribute(.link, value: alveoluLink, range: alveoluRange)
-            bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: alveoluRange)
         }
 
         // Emphasize "fitted"
@@ -229,6 +326,18 @@ Better fit means better protection—for you and the people around you.
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
 
+        middle2TextView.attributedText = middle2AttributedString
+        middle2TextView.linkTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+
+        middle3TextView.attributedText = middle3AttributedString
+        middle3TextView.linkTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+
         bodyTextView.attributedText = bodyAttributedString
         bodyTextView.linkTextAttributes = [
             .foregroundColor: UIColor.systemBlue,
@@ -240,6 +349,13 @@ Better fit means better protection—for you and the people around you.
         contentView.addSubview(captionLabel)
         contentView.addSubview(middleTextView)
         contentView.addSubview(airBreathedImageView)
+        contentView.addSubview(middle2TextView)
+        contentView.addSubview(handsLungsImageView)
+        contentView.addSubview(middle3TextView)
+        contentView.addSubview(qlftImageView)
+        contentView.addSubview(qlftCaptionLabel)
+        contentView.addSubview(qnftImageView)
+        contentView.addSubview(qnftCaptionLabel)
         contentView.addSubview(bodyTextView)
 
         setupConstraints()
@@ -287,8 +403,46 @@ Better fit means better protection—for you and the people around you.
             airBreathedImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             airBreathedImageView.heightAnchor.constraint(equalTo: airBreathedImageView.widthAnchor, multiplier: 0.6), // Maintain aspect ratio
 
+            // Middle2 text view
+            middle2TextView.topAnchor.constraint(equalTo: airBreathedImageView.bottomAnchor, constant: 20),
+            middle2TextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            middle2TextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
+            // Hands vs lungs image view
+            handsLungsImageView.topAnchor.constraint(equalTo: middle2TextView.bottomAnchor, constant: 20),
+            handsLungsImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            handsLungsImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            handsLungsImageView.heightAnchor.constraint(equalTo: handsLungsImageView.widthAnchor, multiplier: 0.65), // Maintain aspect ratio
+
+            // Middle3 text view
+            middle3TextView.topAnchor.constraint(equalTo: handsLungsImageView.bottomAnchor, constant: 20),
+            middle3TextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            middle3TextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
+            // QLFT image view
+            qlftImageView.topAnchor.constraint(equalTo: middle3TextView.bottomAnchor, constant: 20),
+            qlftImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            qlftImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            qlftImageView.heightAnchor.constraint(equalTo: qlftImageView.widthAnchor, multiplier: 0.6), // Maintain aspect ratio
+
+            // QLFT caption label
+            qlftCaptionLabel.topAnchor.constraint(equalTo: qlftImageView.bottomAnchor, constant: 8),
+            qlftCaptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            qlftCaptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
+            // QNFT image view
+            qnftImageView.topAnchor.constraint(equalTo: qlftCaptionLabel.bottomAnchor, constant: 20),
+            qnftImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            qnftImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            qnftImageView.heightAnchor.constraint(equalTo: qnftImageView.widthAnchor, multiplier: 0.55), // Maintain aspect ratio
+
+            // QNFT caption label
+            qnftCaptionLabel.topAnchor.constraint(equalTo: qnftImageView.bottomAnchor, constant: 8),
+            qnftCaptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            qnftCaptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+
             // Body text view
-            bodyTextView.topAnchor.constraint(equalTo: airBreathedImageView.bottomAnchor, constant: 20),
+            bodyTextView.topAnchor.constraint(equalTo: qnftCaptionLabel.bottomAnchor, constant: 20),
             bodyTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             bodyTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             bodyTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
@@ -310,6 +464,27 @@ Better fit means better protection—for you and the people around you.
     @objc private func airBreathedImageTapped() {
         // Create a full-screen image viewer for zooming
         let imageViewerVC = ImageViewerViewController(image: airBreathedImageView.image)
+        imageViewerVC.modalPresentationStyle = .fullScreen
+        present(imageViewerVC, animated: true)
+    }
+
+    @objc private func handsLungsImageTapped() {
+        // Create a full-screen image viewer for zooming
+        let imageViewerVC = ImageViewerViewController(image: handsLungsImageView.image)
+        imageViewerVC.modalPresentationStyle = .fullScreen
+        present(imageViewerVC, animated: true)
+    }
+
+    @objc private func qlftImageTapped() {
+        // Create a full-screen image viewer for zooming
+        let imageViewerVC = ImageViewerViewController(image: qlftImageView.image)
+        imageViewerVC.modalPresentationStyle = .fullScreen
+        present(imageViewerVC, animated: true)
+    }
+
+    @objc private func qnftImageTapped() {
+        // Create a full-screen image viewer for zooming
+        let imageViewerVC = ImageViewerViewController(image: qnftImageView.image)
         imageViewerVC.modalPresentationStyle = .fullScreen
         present(imageViewerVC, animated: true)
     }
