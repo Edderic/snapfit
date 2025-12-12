@@ -257,8 +257,8 @@ class LoginViewController: UIViewController {
             aboutButton.heightAnchor.constraint(equalToConstant: 44),
             aboutButton.bottomAnchor.constraint(equalTo: recommendMasksButton.topAnchor, constant: -16),
 
-            // Email text field - positioned higher to avoid keyboard covering login button
-            emailTextField.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -100),
+            // Email text field - positioned significantly higher to avoid keyboard and password autofill UI
+            emailTextField.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -150),
             emailTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             emailTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 44),
@@ -504,20 +504,23 @@ class LoginViewController: UIViewController {
         // Hide background image to show solid #2F80ED color
         backgroundImageView.isHidden = true
         
-        // Update welcome text with clickable links
-        let loginText = "Fit testers: please contribute your data to improve this mask recommender. For more information, see the consent form at https://breathesafe.xyz/#/consent_form. If you have not registered, please register here: https://www.breathesafe.xyz/#/signin"
+        // Update welcome text with clickable links and larger font
+        let loginText = "Fit testers: please contribute your data to improve this mask recommender. For more information, see the:\n• consent form\n• register here"
         let attributedString = NSMutableAttributedString(string: loginText)
         
-        // Make consent form URL clickable
-        let consentFormUrlRange = (loginText as NSString).range(of: "https://breathesafe.xyz/#/consent_form")
-        if consentFormUrlRange.location != NSNotFound {
-            attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormUrlRange)
+        // Set default font size to 19pt for better readability
+        attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 19), range: NSRange(location: 0, length: loginText.count))
+        
+        // Make "consent form" clickable
+        let consentFormRange = (loginText as NSString).range(of: "consent form")
+        if consentFormRange.location != NSNotFound {
+            attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormRange)
         }
         
-        // Make registration URL clickable
-        let registrationUrlRange = (loginText as NSString).range(of: "https://www.breathesafe.xyz/#/signin")
-        if registrationUrlRange.location != NSNotFound {
-            attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registrationUrlRange)
+        // Make "register here" clickable
+        let registerRange = (loginText as NSString).range(of: "register here")
+        if registerRange.location != NSNotFound {
+            attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registerRange)
         }
         
         firstParagraphTextView.attributedText = attributedString
