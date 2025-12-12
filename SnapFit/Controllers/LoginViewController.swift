@@ -7,6 +7,7 @@ class LoginViewController: UIViewController {
     private var scrollView: UIScrollView!
     private var contentView: UIView!
     private var firstParagraphTextView: UITextView!
+    private var aboutButton: UIButton!
     private var recommendMasksButton: UIButton!
     private var contributeDataButton: UIButton!
     private var emailTextField: UITextField!
@@ -81,6 +82,17 @@ class LoginViewController: UIViewController {
         firstParagraphTextView.delegate = self
         firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(firstParagraphTextView)
+
+        // Create About button
+        aboutButton = UIButton(type: .system)
+        aboutButton.setTitle("About", for: .normal)
+        aboutButton.backgroundColor = UIColor.systemGray
+        aboutButton.setTitleColor(UIColor.white, for: .normal)
+        aboutButton.layer.cornerRadius = 8
+        aboutButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        aboutButton.translatesAutoresizingMaskIntoConstraints = false
+        aboutButton.addTarget(self, action: #selector(aboutButtonTapped), for: .touchUpInside)
+        contentView.addSubview(aboutButton)
 
         // Create Recommend Me Masks button
         recommendMasksButton = UIButton(type: .system)
@@ -207,8 +219,14 @@ class LoginViewController: UIViewController {
             firstParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             firstParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
+            // About button
+            aboutButton.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 40),
+            aboutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            aboutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            aboutButton.heightAnchor.constraint(equalToConstant: 44),
+
             // Recommend Masks button
-            recommendMasksButton.topAnchor.constraint(equalTo: firstParagraphTextView.bottomAnchor, constant: 40),
+            recommendMasksButton.topAnchor.constraint(equalTo: aboutButton.bottomAnchor, constant: 16),
             recommendMasksButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             recommendMasksButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             recommendMasksButton.heightAnchor.constraint(equalToConstant: 44),
@@ -280,6 +298,11 @@ class LoginViewController: UIViewController {
     }
 
     // MARK: - Actions
+    @objc private func aboutButtonTapped() {
+        let aboutVC = AboutViewController()
+        navigationController?.pushViewController(aboutVC, animated: true)
+    }
+
     @objc private func recommendMasksButtonTapped() {
         let alert = UIAlertController(
             title: "Coming Soon",
@@ -481,6 +504,7 @@ class LoginViewController: UIViewController {
         contributeButtonBottomConstraint.isActive = false
         
         // Hide main menu buttons
+        aboutButton.isHidden = true
         recommendMasksButton.isHidden = true
         contributeDataButton.isHidden = true
         
@@ -517,6 +541,7 @@ class LoginViewController: UIViewController {
         contributeButtonBottomConstraint.isActive = true
         
         // Show main menu buttons
+        aboutButton.isHidden = false
         recommendMasksButton.isHidden = false
         contributeDataButton.isHidden = false
         

@@ -22,6 +22,7 @@
 		DA5555462E823E8700757129 /* OfflineSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555422E823E8700757129 /* OfflineSyncManager.swift */; };
 		DA5555472E823E8700757129 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555402E823E8700757129 /* AuthenticationService.swift */; };
 		DA5555492E823EA800757129 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555482E823EA800757129 /* LoginViewController.swift */; };
+		DA55554A2E823EB800757129 /* AboutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55554B2E823EB800757129 /* AboutViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		DA5555412E823E8700757129 /* NetworkReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachability.swift; sourceTree = "<group>"; };
 		DA5555422E823E8700757129 /* OfflineSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineSyncManager.swift; sourceTree = "<group>"; };
 		DA5555482E823EA800757129 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
+		DA55554B2E823EB800757129 /* AboutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				DA5555482E823EA800757129 /* LoginViewController.swift */,
+				DA55554B2E823EB800757129 /* AboutViewController.swift */,
 				A1234567890123456789012F /* FaceMeasurementViewController.swift */,
 			);
 			path = Controllers;
@@ -204,6 +207,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DA5555492E823EA800757129 /* LoginViewController.swift in Sources */,
+				DA55554A2E823EB800757129 /* AboutViewController.swift in Sources */,
 				A1234567890123456789012E /* FaceMeasurementViewController.swift in Sources */,
 				A1234567890123456789013A /* MeasurementEngine.swift in Sources */,
 				A1234567890123456789013C /* FacialLandmarks.swift in Sources */,
