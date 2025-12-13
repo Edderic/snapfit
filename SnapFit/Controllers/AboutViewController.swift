@@ -29,7 +29,8 @@ class AboutViewController: UIViewController {
     // MARK: - Setup Methods
     private func setupUI() {
         title = "About SnapFit"
-        view.backgroundColor = UIColor.systemBackground
+        // Set background color to #2F80ED
+        view.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
 
         // Add back button
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -54,6 +55,7 @@ class AboutViewController: UIViewController {
         headerTextView.isEditable = false
         headerTextView.isScrollEnabled = false
         headerTextView.backgroundColor = .clear
+        headerTextView.textColor = .white
         headerTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         headerTextView.textContainer.lineFragmentPadding = 0
         headerTextView.translatesAutoresizingMaskIntoConstraints = false
@@ -71,6 +73,7 @@ Air isn't just empty space — it's full of tiny particles called aerosols that 
         middleTextView.isEditable = false
         middleTextView.isScrollEnabled = false
         middleTextView.backgroundColor = .clear
+        middleTextView.textColor = .white
         middleTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         middleTextView.textContainer.lineFragmentPadding = 0
         middleTextView.translatesAutoresizingMaskIntoConstraints = false
@@ -88,6 +91,7 @@ The air you breathe matters more than many people realize:
         middle2TextView.isEditable = false
         middle2TextView.isScrollEnabled = false
         middle2TextView.backgroundColor = .clear
+        middle2TextView.textColor = .white
         middle2TextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         middle2TextView.textContainer.lineFragmentPadding = 0
         middle2TextView.translatesAutoresizingMaskIntoConstraints = false
@@ -103,6 +107,7 @@ The air you breathe matters more than many people realize:
         middle3TextView.isEditable = false
         middle3TextView.isScrollEnabled = false
         middle3TextView.backgroundColor = .clear
+        middle3TextView.textColor = .white
         middle3TextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         middle3TextView.textContainer.lineFragmentPadding = 0
         middle3TextView.translatesAutoresizingMaskIntoConstraints = false
@@ -136,6 +141,7 @@ Professional fit testing exists—but it can be expensive, time-consuming, and/o
         bodyTextView.isEditable = false
         bodyTextView.isScrollEnabled = false
         bodyTextView.backgroundColor = .clear
+        bodyTextView.textColor = .white
         bodyTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         bodyTextView.textContainer.lineFragmentPadding = 0
         bodyTextView.translatesAutoresizingMaskIntoConstraints = false
@@ -212,7 +218,7 @@ Better fit means better protection—for you and the people around you.
         captionLabel = UILabel()
         captionLabel.text = "Phases involved in airborne transmission of respiratory viruses. Credit: From Wang et al., 'Airborne transmission of respiratory viruses' (https://doi.org/10.1126/science.abd9149). N.CARY/SCIENCE"
         captionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        captionLabel.textColor = UIColor.secondaryLabel
+        captionLabel.textColor = .white
         captionLabel.numberOfLines = 0
         captionLabel.textAlignment = .center
         captionLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -221,7 +227,7 @@ Better fit means better protection—for you and the people around you.
         qlftCaptionLabel = UILabel()
         qlftCaptionLabel.text = "Qualitative Fit Testing"
         qlftCaptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        qlftCaptionLabel.textColor = UIColor.secondaryLabel
+        qlftCaptionLabel.textColor = .white
         qlftCaptionLabel.numberOfLines = 0
         qlftCaptionLabel.textAlignment = .center
         qlftCaptionLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -230,7 +236,7 @@ Better fit means better protection—for you and the people around you.
         qnftCaptionLabel = UILabel()
         qnftCaptionLabel.text = "Quantitative Fit Testing"
         qnftCaptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        qnftCaptionLabel.textColor = UIColor.secondaryLabel
+        qnftCaptionLabel.textColor = .white
         qnftCaptionLabel.numberOfLines = 0
         qnftCaptionLabel.textAlignment = .center
         qnftCaptionLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -247,7 +253,7 @@ Better fit means better protection—for you and the people around you.
 
         // Format header
         headerAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: headerAttributedString.length))
-        headerAttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: headerAttributedString.length))
+        headerAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: headerAttributedString.length))
 
         // Format header headline
         let headerHeadline = "Air Is Everywhere — And So Are Tiny Particles"
@@ -262,28 +268,30 @@ Better fit means better protection—for you and the people around you.
         if aerosolSentenceRange.location != NSNotFound {
             let scienceLink = "https://www.science.org/doi/10.1126/science.abd9149"
             headerAttributedString.addAttribute(.link, value: scienceLink, range: aerosolSentenceRange)
-            headerAttributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: aerosolSentenceRange)
+            headerAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: aerosolSentenceRange)
+            headerAttributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: aerosolSentenceRange)
         }
 
         // Format middle content
         middleAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: middleAttributedString.length))
-        middleAttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: middleAttributedString.length))
+        middleAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: middleAttributedString.length))
 
         // Add tidal volume link in middle content
         let tidalVolumeLink = "https://en.wikipedia.org/wiki/Tidal_volume"
         let tidalVolumeRange = (middleContent as NSString).range(of: tidalVolumeLink)
         if tidalVolumeRange.location != NSNotFound {
             middleAttributedString.addAttribute(.link, value: tidalVolumeLink, range: tidalVolumeRange)
-            middleAttributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: tidalVolumeRange)
+            middleAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: tidalVolumeRange)
+            middleAttributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: tidalVolumeRange)
         }
 
         // Format middle2 content
         middle2AttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: middle2AttributedString.length))
-        middle2AttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: middle2AttributedString.length))
+        middle2AttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: middle2AttributedString.length))
 
         // Format middle3 content
         middle3AttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: middle3AttributedString.length))
-        middle3AttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: middle3AttributedString.length))
+        middle3AttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: middle3AttributedString.length))
 
         // Format middle3 headlines
         let middle3Headlines = ["Why Fit Matters", "Fit Is Personal"]
@@ -296,7 +304,7 @@ Better fit means better protection—for you and the people around you.
 
         // Format body
         bodyAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: bodyAttributedString.length))
-        bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.label, range: NSRange(location: 0, length: bodyAttributedString.length))
+        bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: bodyAttributedString.length))
 
         // Format body headlines
         let bodyHeadlines = ["Why Fit Matters", "Fit Is Personal", "How SnapFit Helps"]
@@ -316,31 +324,31 @@ Better fit means better protection—for you and the people around you.
 
         headerTextView.attributedText = headerAttributedString
         headerTextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
+            .foregroundColor: UIColor.white,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
 
         middleTextView.attributedText = middleAttributedString
         middleTextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
+            .foregroundColor: UIColor.white,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
 
         middle2TextView.attributedText = middle2AttributedString
         middle2TextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
+            .foregroundColor: UIColor.white,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
 
         middle3TextView.attributedText = middle3AttributedString
         middle3TextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
+            .foregroundColor: UIColor.white,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
 
         bodyTextView.attributedText = bodyAttributedString
         bodyTextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
+            .foregroundColor: UIColor.white,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
 
