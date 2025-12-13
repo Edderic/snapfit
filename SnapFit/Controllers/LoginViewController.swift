@@ -80,18 +80,17 @@ class LoginViewController: UIViewController {
         firstParagraphTextView = UITextView()
         firstParagraphTextView.isEditable = false
         firstParagraphTextView.isScrollEnabled = false
-        firstParagraphTextView.backgroundColor = UIColor(white: 1.0, alpha: 0.9)
-        firstParagraphTextView.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        firstParagraphTextView.backgroundColor = .clear
+        firstParagraphTextView.textColor = .white
+        firstParagraphTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
         firstParagraphTextView.textContainer.lineFragmentPadding = 0
-        firstParagraphTextView.font = UIFont.systemFont(ofSize: 17)
-        firstParagraphTextView.textColor = UIColor.label
+        firstParagraphTextView.font = UIFont.systemFont(ofSize: 19)
         firstParagraphTextView.text = ""
         firstParagraphTextView.linkTextAttributes = [
-            .foregroundColor: UIColor.systemBlue,
+            .foregroundColor: UIColor.white,
             .underlineStyle: NSUnderlineStyle.single.rawValue
         ]
         firstParagraphTextView.delegate = self
-        firstParagraphTextView.layer.cornerRadius = 8
         firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
         firstParagraphTextView.isHidden = true
         contentView.addSubview(firstParagraphTextView)
@@ -508,19 +507,24 @@ class LoginViewController: UIViewController {
         let loginText = "Fit testers: please contribute your data to improve this mask recommender. For more information, see the:\n• consent form\n• register here"
         let attributedString = NSMutableAttributedString(string: loginText)
         
-        // Set default font size to 19pt for better readability
+        // Set default font size to 19pt and white color
         attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 19), range: NSRange(location: 0, length: loginText.count))
+        attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: loginText.count))
         
-        // Make "consent form" clickable
+        // Make "consent form" clickable with white underlined styling
         let consentFormRange = (loginText as NSString).range(of: "consent form")
         if consentFormRange.location != NSNotFound {
             attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormRange)
+            attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: consentFormRange)
+            attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: consentFormRange)
         }
         
-        // Make "register here" clickable
+        // Make "register here" clickable with white underlined styling
         let registerRange = (loginText as NSString).range(of: "register here")
         if registerRange.location != NSNotFound {
             attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registerRange)
+            attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: registerRange)
+            attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: registerRange)
         }
         
         firstParagraphTextView.attributedText = attributedString
