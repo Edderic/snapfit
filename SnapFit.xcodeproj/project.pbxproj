@@ -15,7 +15,6 @@
 		A1234567890123456789013E /* DataExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789013F /* DataExportManager.swift */; };
 		A1234567890123456789014A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014B /* Main.storyboard */; };
 		A1234567890123456789014C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014D /* Assets.xcassets */; };
-		A1234567890123456789014E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789014F /* LaunchScreen.storyboard */; };
 		DA55553E2E823E4500757129 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55553D2E823E4500757129 /* User.swift */; };
 		DA5555442E823E8700757129 /* NetworkReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555412E823E8700757129 /* NetworkReachability.swift */; };
 		DA5555452E823E8700757129 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55553F2E823E8700757129 /* APIClient.swift */; };
@@ -24,6 +23,8 @@
 		DA5555492E823EA800757129 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA5555482E823EA800757129 /* LoginViewController.swift */; };
 		DA55554A2E823EB800757129 /* AboutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55554B2E823EB800757129 /* AboutViewController.swift */; };
 		DA55554D2E823ED800757129 /* ImageViewerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA55554E2E823ED800757129 /* ImageViewerViewController.swift */; };
+		DA8F03662EEC73F400D87464 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DA55554C2E823EC800757129 /* LaunchScreen.storyboard */; };
+		DA8F03682EEFC7EE00D87464 /* ManagedUserTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8F03672EEFC7EE00D87464 /* ManagedUserTableViewCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,8 +44,9 @@
 		DA5555422E823E8700757129 /* OfflineSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineSyncManager.swift; sourceTree = "<group>"; };
 		DA5555482E823EA800757129 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		DA55554B2E823EB800757129 /* AboutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutViewController.swift; sourceTree = "<group>"; };
-		DA55554C2E823EC800757129 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DA55554C2E823EC800757129 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		DA55554E2E823ED800757129 /* ImageViewerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerViewController.swift; sourceTree = "<group>"; };
+		DA8F03672EEFC7EE00D87464 /* ManagedUserTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedUserTableViewCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,7 +80,7 @@
 				A1234567890123456789016D /* Managers */,
 				A1234567890123456789014B /* Main.storyboard */,
 				A1234567890123456789014D /* Assets.xcassets */,
-				A1234567890123456789014F /* LaunchScreen.storyboard */,
+				DA55554C2E823EC800757129 /* LaunchScreen.storyboard */,
 				A1234567890123456789015A /* Info.plist */,
 			);
 			path = SnapFit;
@@ -115,6 +117,7 @@
 		A1234567890123456789016C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				DA8F03672EEFC7EE00D87464 /* ManagedUserTableViewCell.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -199,7 +202,7 @@
 			files = (
 				A1234567890123456789014C /* Assets.xcassets in Resources */,
 				A1234567890123456789014A /* Main.storyboard in Resources */,
-				A1234567890123456789014E /* LaunchScreen.storyboard in Resources */,
+				DA8F03662EEC73F400D87464 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,6 +214,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DA5555492E823EA800757129 /* LoginViewController.swift in Sources */,
+				DA8F03682EEFC7EE00D87464 /* ManagedUserTableViewCell.swift in Sources */,
 				DA55554A2E823EB800757129 /* AboutViewController.swift in Sources */,
 				DA55554D2E823ED800757129 /* ImageViewerViewController.swift in Sources */,
 				A1234567890123456789012E /* FaceMeasurementViewController.swift in Sources */,
@@ -235,14 +239,6 @@
 			children = (
 			);
 			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		A1234567890123456789014F /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				DA55554C2E823EC800757129 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

@@ -28,6 +28,7 @@ struct ManagedUser: Codable {
     let firstName: String?
     let lastName: String?
     let email: String?
+    let fmPercentComplete: Double?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -39,6 +40,7 @@ struct ManagedUser: Codable {
         case firstName = "first_name"
         case lastName = "last_name"
         case email
+        case fmPercentComplete = "fm_percent_complete"
     }
     
     /// Get display name for the managed user

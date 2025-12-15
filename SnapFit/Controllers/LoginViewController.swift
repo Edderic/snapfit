@@ -20,7 +20,10 @@ class LoginViewController: UIViewController {
     private var activityIndicator: UIActivityIndicatorView!
     private var signUpActivityIndicator: UIActivityIndicatorView!
     private var errorLabel: UILabel!
-    private var managedUsersButton: UIButton!
+    private var managedUsersTableView: UITableView!
+    private var emptyManagedUsersTextView: UITextView!
+    private var refreshManagedUsersButton: UIButton!
+    private var refreshActivityIndicator: UIActivityIndicatorView!
     private var logoutButton: UIButton!
 
     // MARK: - Properties
@@ -57,6 +60,30 @@ class LoginViewController: UIViewController {
             // User can tap "Contribute Data" to see the authenticated state
             loadManagedUsers()
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Update navigation bar based on authentication state
+        if isShowingLoginForm && authService.isAuthenticated {
+            updateNavigationBarForRespiratoryUsers()
+        }
+    }
+    
+    private func updateNavigationBarForRespiratoryUsers() {
+        // Change title to "Respirator Users"
+        title = "Respirator Users"
+        
+        // Add + button
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addUserButtonTapped))
+        addButton.tintColor = .white
+        
+        // Add ? button
+        let helpButton = UIBarButtonItem(image: UIImage(systemName: "questionmark.circle"), style: .plain, target: self, action: #selector(helpButtonTapped))
+        helpButton.tintColor = .white
+        
+        navigationItem.rightBarButtonItems = [helpButton, addButton]
     }
 
     // MARK: - Setup Methods
@@ -241,17 +268,72 @@ class LoginViewController: UIViewController {
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(errorLabel)
 
-        // Create managed users button
-        managedUsersButton = UIButton(type: .system)
-        managedUsersButton.setTitle("Select User for Measurement", for: .normal)
-        managedUsersButton.backgroundColor = UIColor.systemGreen
-        managedUsersButton.setTitleColor(UIColor.white, for: .normal)
-        managedUsersButton.layer.cornerRadius = 8
-        managedUsersButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        managedUsersButton.isHidden = true
-        managedUsersButton.translatesAutoresizingMaskIntoConstraints = false
-        managedUsersButton.addTarget(self, action: #selector(managedUsersButtonTapped(_:)), for: .touchUpInside)
-        contentView.addSubview(managedUsersButton)
+        // Create managed users table view
+        managedUsersTableView = UITableView()
+        managedUsersTableView.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        managedUsersTableView.separatorColor = .white
+        managedUsersTableView.layer.cornerRadius = 8
+        managedUsersTableView.isHidden = true
+        managedUsersTableView.translatesAutoresizingMaskIntoConstraints = false
+        managedUsersTableView.register(ManagedUserTableViewCell.self, forCellReuseIdentifier: ManagedUserTableViewCell.identifier)
+        managedUsersTableView.delegate = self
+        managedUsersTableView.dataSource = self
+        contentView.addSubview(managedUsersTableView)
+
+        // Create empty managed users message text view
+        emptyManagedUsersTextView = UITextView()
+        emptyManagedUsersTextView.isEditable = false
+        emptyManagedUsersTextView.isScrollEnabled = false
+        emptyManagedUsersTextView.backgroundColor = .clear
+        emptyManagedUsersTextView.textColor = .white
+        emptyManagedUsersTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        emptyManagedUsersTextView.textContainer.lineFragmentPadding = 0
+        emptyManagedUsersTextView.font = UIFont.systemFont(ofSize: 16)
+        emptyManagedUsersTextView.linkTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+        emptyManagedUsersTextView.delegate = self
+        emptyManagedUsersTextView.translatesAutoresizingMaskIntoConstraints = false
+        emptyManagedUsersTextView.isHidden = true
+        
+        // Set up the attributed text with link
+        let emptyMessage = "The list of Respirator Users that you manage is empty. Please go on the Respirator Users page to add at least one user (e.g. yourself)."
+        let attributedMessage = NSMutableAttributedString(string: emptyMessage)
+        
+        // Set default attributes
+        attributedMessage.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: NSRange(location: 0, length: emptyMessage.count))
+        attributedMessage.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: emptyMessage.count))
+        
+        // Add link to "Respirator Users page"
+        let linkText = "Respirator Users page"
+        let linkRange = (emptyMessage as NSString).range(of: linkText)
+        if linkRange.location != NSNotFound {
+            attributedMessage.addAttribute(.link, value: "https://www.breathesafe.xyz/#/respirator_users", range: linkRange)
+            attributedMessage.addAttribute(.foregroundColor, value: UIColor.white, range: linkRange)
+            attributedMessage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: linkRange)
+        }
+        
+        emptyManagedUsersTextView.attributedText = attributedMessage
+        contentView.addSubview(emptyManagedUsersTextView)
+
+        // Create "Refresh Respirator Users" button
+        refreshManagedUsersButton = UIButton(type: .system)
+        refreshManagedUsersButton.setTitle("Refresh Respirator Users", for: .normal)
+        refreshManagedUsersButton.backgroundColor = UIColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
+        refreshManagedUsersButton.setTitleColor(UIColor.white, for: .normal)
+        refreshManagedUsersButton.layer.cornerRadius = 8
+        refreshManagedUsersButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        refreshManagedUsersButton.isHidden = true
+        refreshManagedUsersButton.translatesAutoresizingMaskIntoConstraints = false
+        refreshManagedUsersButton.addTarget(self, action: #selector(refreshManagedUsersButtonTapped), for: .touchUpInside)
+        contentView.addSubview(refreshManagedUsersButton)
+
+        // Create activity indicator for refresh button
+        refreshActivityIndicator = UIActivityIndicatorView(style: .medium)
+        refreshActivityIndicator.hidesWhenStopped = true
+        refreshActivityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(refreshActivityIndicator)
 
         // Create logout button
         logoutButton = UIButton(type: .system)
@@ -272,6 +354,8 @@ class LoginViewController: UIViewController {
         termsTextView.isHidden = true
         loginButton.isHidden = true
         signUpButton.isHidden = true
+        emptyManagedUsersTextView.isHidden = true
+        refreshManagedUsersButton.isHidden = true
 
         setupConstraints()
     }
@@ -367,11 +451,26 @@ class LoginViewController: UIViewController {
             errorLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             errorLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
 
-            // Managed users button
-            managedUsersButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            managedUsersButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            managedUsersButton.heightAnchor.constraint(equalToConstant: 50),
-            managedUsersButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -16),
+            // Managed users table view (shown when there are managed users or when empty)
+            managedUsersTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            managedUsersTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            managedUsersTableView.heightAnchor.constraint(equalToConstant: 200), // Max height for ~3-4 rows
+            managedUsersTableView.bottomAnchor.constraint(equalTo: refreshManagedUsersButton.topAnchor, constant: -16),
+
+            // Empty managed users message text view (shown when no managed users)
+            emptyManagedUsersTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            emptyManagedUsersTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            emptyManagedUsersTextView.bottomAnchor.constraint(equalTo: refreshManagedUsersButton.topAnchor, constant: -16),
+
+            // Refresh Respirator Users button (always shown when authenticated)
+            refreshManagedUsersButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            refreshManagedUsersButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            refreshManagedUsersButton.heightAnchor.constraint(equalToConstant: 50),
+            refreshManagedUsersButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -16),
+
+            // Refresh activity indicator
+            refreshActivityIndicator.centerXAnchor.constraint(equalTo: refreshManagedUsersButton.centerXAnchor),
+            refreshActivityIndicator.centerYAnchor.constraint(equalTo: refreshManagedUsersButton.centerYAnchor),
 
             // Logout button
             logoutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
@@ -476,8 +575,61 @@ class LoginViewController: UIViewController {
         signUp(email: email, password: password)
     }
 
-    @objc private func managedUsersButtonTapped(_ sender: UIButton) {
-        showManagedUsersSelection()
+    @objc private func addUserButtonTapped() {
+        print("Add user button tapped - TODO: Implement AddEditUserViewController")
+        // TODO: Navigate to AddEditUserViewController
+    }
+    
+    @objc private func helpButtonTapped() {
+        let alert = UIAlertController(title: "Overview Tab Help", message: nil, preferredStyle: .alert)
+        
+        let message = """
+        This page is meant for people who are trying to contribute data to Breathesafe for research.
+        
+        Getting Started:
+        Create a new user: Click the "+" button to create a new user that you manage. You'll be asked questions about demographics and facial measurements, which help develop the mask recommender algorithm.
+        
+        Using the Table:
+        Click on cells: Clicking on a particular cell will take you to the associated section for that user (demographics, facial measurements, etc.)
+        """
+        
+        alert.message = message
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    @objc private func refreshManagedUsersButtonTapped() {
+        // Show loading state
+        refreshActivityIndicator.startAnimating()
+        refreshManagedUsersButton.setTitle("", for: .normal)
+        refreshManagedUsersButton.isEnabled = false
+        
+        // Reload managed users
+        authService.loadManagedUsers { [weak self] result in
+            DispatchQueue.main.async {
+                // Hide loading state
+                self?.refreshActivityIndicator.stopAnimating()
+                self?.refreshManagedUsersButton.setTitle("Refresh Respirator Users", for: .normal)
+                self?.refreshManagedUsersButton.isEnabled = true
+                
+                switch result {
+                case .success(let users):
+                    print("Successfully refreshed \(users.count) managed users")
+                    self?.managedUsers = users
+                    self?.updateManagedUsersButton()
+                    
+                    // Show appropriate message
+                    if users.isEmpty {
+                        self?.showConfirmation("List refreshed - still empty. Please add users on the Respirator Users page.")
+                    } else {
+                        self?.showConfirmation("Successfully refreshed! Found \(users.count) user(s).")
+                    }
+                case .failure(let error):
+                    print("Failed to refresh managed users: \(error)")
+                    self?.showError("Failed to refresh: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 
     @objc private func logoutButtonTapped() {
@@ -507,7 +659,7 @@ class LoginViewController: UIViewController {
 
         // Clear any old managed users before logging in
         managedUsers = []
-        managedUsersButton.isHidden = true
+        managedUsersTableView.isHidden = true
 
         // Add some debugging
         print("Attempting login with email: \(email)")
@@ -609,7 +761,7 @@ class LoginViewController: UIViewController {
     private func loadManagedUsers() {
         // Clear old managed users first
         managedUsers = []
-        managedUsersButton.isHidden = true
+        managedUsersTableView.isHidden = true
         
         print("Loading managed users for current user: \(authService.currentUser?.email ?? "unknown") (ID: \(authService.currentUser?.id ?? -1))")
         
@@ -634,12 +786,18 @@ class LoginViewController: UIViewController {
     }
 
     private func updateManagedUsersButton() {
-        if !managedUsers.isEmpty {
-            managedUsersButton.isHidden = false
-            managedUsersButton.setTitle("Select User for Measurement (\(managedUsers.count) users)", for: .normal)
-        } else {
-            managedUsersButton.isHidden = true
-        }
+        print("updateManagedUsersButton called with \(managedUsers.count) managed users")
+        
+        // Always show the table view when authenticated
+        managedUsersTableView.isHidden = false
+        managedUsersTableView.reloadData()
+        
+        // Hide the empty message text view (we'll show "No users found" in the table instead)
+        emptyManagedUsersTextView.isHidden = true
+        
+        // Always show the refresh button when authenticated
+        print("Showing refresh button")
+        refreshManagedUsersButton.isHidden = false
     }
 
     private func showAuthenticatedState() {
@@ -655,24 +813,44 @@ class LoginViewController: UIViewController {
         // Show logout button
         logoutButton.isHidden = false
         
+        // Update managed users button visibility based on current state
+        updateManagedUsersButton()
+        
         // Keep the "Fit testers" text and back button visible
     }
 
-    private func showManagedUsersSelection() {
-        let alert = UIAlertController(title: "Select User", message: "Choose a user to capture measurements for:", preferredStyle: .actionSheet)
+    private func showActionsForUser(_ user: ManagedUser, sourceView: UIView) {
+        let alert = UIAlertController(title: "Actions for \(user.displayName)", message: "Choose an action:", preferredStyle: .actionSheet)
 
-        for user in managedUsers {
-            alert.addAction(UIAlertAction(title: user.displayName, style: .default) { [weak self] _ in
-                self?.navigateToFaceMeasurement(for: user)
-            })
-        }
+        // Add Facial Measurements action
+        alert.addAction(UIAlertAction(title: "Add Facial Measurements", style: .default) { [weak self] _ in
+            self?.navigateToFaceMeasurement(for: user)
+        })
+
+        // Add Fit Test action
+        alert.addAction(UIAlertAction(title: "Add a Fit Test", style: .default) { [weak self] _ in
+            guard let managedId = user.managedId else {
+                self?.showError("Invalid user ID")
+                return
+            }
+            
+            let urlString = "https://www.breathesafe.xyz/#/fit_tests/new?userId=\(managedId)&tabToShow=Mask"
+            guard let url = URL(string: urlString) else {
+                self?.showError("Invalid URL")
+                return
+            }
+            
+            let safariVC = SFSafariViewController(url: url)
+            safariVC.preferredControlTintColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+            self?.present(safariVC, animated: true)
+        })
 
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
 
         // For iPad
         if let popover = alert.popoverPresentationController {
-            popover.sourceView = managedUsersButton
-            popover.sourceRect = managedUsersButton.bounds
+            popover.sourceView = sourceView
+            popover.sourceRect = sourceView.bounds
         }
 
         present(alert, animated: true)
@@ -756,12 +934,17 @@ class LoginViewController: UIViewController {
             loginButton.isHidden = true
             signUpButton.isHidden = true
             
+            // Update navigation bar for Respirator Users view
+            updateNavigationBarForRespiratoryUsers()
+            
             // Load managed users for the currently authenticated user
             loadManagedUsers()
         } else {
             // Clear any old managed users data
             managedUsers = []
-            managedUsersButton.isHidden = true
+            managedUsersTableView.isHidden = true
+            emptyManagedUsersTextView.isHidden = true
+            refreshManagedUsersButton.isHidden = true
             logoutButton.isHidden = true
             
             // Show login form
@@ -771,15 +954,15 @@ class LoginViewController: UIViewController {
             termsTextView.isHidden = false
             loginButton.isHidden = false
             signUpButton.isHidden = false
+            
+            // Add back button to navigation bar
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                title: "Back",
+                style: .plain,
+                target: self,
+                action: #selector(backToMainMenuTapped)
+            )
         }
-        
-        // Add back button to navigation bar
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "Back",
-            style: .plain,
-            target: self,
-            action: #selector(backToMainMenuTapped)
-        )
         
         // Animate the transition
         UIView.animate(withDuration: 0.3) {
@@ -816,7 +999,9 @@ class LoginViewController: UIViewController {
         loginButton.isHidden = true
         signUpButton.isHidden = true
         errorLabel.isHidden = true
-        managedUsersButton.isHidden = true
+        managedUsersTableView.isHidden = true
+        emptyManagedUsersTextView.isHidden = true
+        refreshManagedUsersButton.isHidden = true
         logoutButton.isHidden = true
         
         // Remove back button from navigation bar
@@ -912,5 +1097,90 @@ extension LoginViewController: UITextFieldDelegate {
             loginButtonTapped(loginButton)
         }
         return true
+    }
+}
+
+// MARK: - UITableViewDelegate & UITableViewDataSource
+extension LoginViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return managedUsers.isEmpty ? 1 : managedUsers.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        if managedUsers.isEmpty {
+            // Show "No users found" message using a basic cell
+            let cell = UITableViewCell(style: .default, reuseIdentifier: "EmptyCell")
+            cell.textLabel?.text = "No users found"
+            cell.textLabel?.textColor = .white
+            cell.textLabel?.textAlignment = .center
+            cell.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+            cell.selectionStyle = .none
+            return cell
+        }
+        
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ManagedUserTableViewCell.identifier, for: indexPath) as? ManagedUserTableViewCell else {
+            return UITableViewCell()
+        }
+        
+        let user = managedUsers[indexPath.row]
+        cell.configure(with: user)
+        cell.onActionsTapped = { [weak self] in
+            self?.showActionsForUser(user, sourceView: cell)
+        }
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 50
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView()
+        headerView.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        
+        let nameLabel = UILabel()
+        nameLabel.text = "Name"
+        nameLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        nameLabel.textColor = .white
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let completionLabel = UILabel()
+        completionLabel.text = "Complete"
+        completionLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        completionLabel.textColor = .white
+        completionLabel.textAlignment = .center
+        completionLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let actionsLabel = UILabel()
+        actionsLabel.text = "Actions"
+        actionsLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        actionsLabel.textColor = .white
+        actionsLabel.textAlignment = .center
+        actionsLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        headerView.addSubview(nameLabel)
+        headerView.addSubview(completionLabel)
+        headerView.addSubview(actionsLabel)
+        
+        NSLayoutConstraint.activate([
+            nameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 12),
+            nameLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            nameLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.4),
+            
+            completionLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
+            completionLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            completionLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.2),
+            
+            actionsLabel.leadingAnchor.constraint(equalTo: completionLabel.trailingAnchor, constant: 8),
+            actionsLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -12),
+            actionsLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
+        ])
+        
+        return headerView
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 30
     }
 }
