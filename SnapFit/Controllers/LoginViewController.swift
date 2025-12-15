@@ -454,9 +454,9 @@ class LoginViewController: UIViewController {
             errorLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
 
             // Managed users table view (shown when there are managed users or when empty)
+            managedUsersTableView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             managedUsersTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             managedUsersTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            managedUsersTableView.heightAnchor.constraint(equalToConstant: 200), // Max height for ~3-4 rows
             managedUsersTableView.bottomAnchor.constraint(equalTo: refreshManagedUsersButton.topAnchor, constant: -16),
 
             // Empty managed users message text view (shown when no managed users)
@@ -590,11 +590,9 @@ class LoginViewController: UIViewController {
         let message = """
         This page is meant for people who are trying to contribute data to Breathesafe for research.
         
-        Getting Started:
-        Create a new user: Click the "+" button to create a new user that you manage. You'll be asked questions about demographics and facial measurements, which help develop the mask recommender algorithm.
+        Actions button:
         
-        Using the Table:
-        Click on cells: Clicking on a particular cell will take you to the associated section for that user (demographics, facial measurements, etc.)
+        The "Actions" button lists options, such as modifying existing demographic data and facial measurements, and adding a fit test for a particular user.
         """
         
         alert.message = message
