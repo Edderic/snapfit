@@ -8,7 +8,6 @@ class LoginViewController: UIViewController {
     private var backgroundImageView: UIImageView!
     private var scrollView: UIScrollView!
     private var contentView: UIView!
-    private var firstParagraphTextView: UITextView!
     private var aboutButton: UIButton!
     private var recommendMasksButton: UIButton!
     private var contributeDataButton: UIButton!
@@ -51,8 +50,11 @@ class LoginViewController: UIViewController {
         setupDelegates()
 
         // Check if user is already authenticated
+        // Note: We don't automatically show the login form here anymore
+        // because it's confusing when a user is already logged in
         if authService.isAuthenticated {
-            showLoginForm()
+            // Just load managed users in the background
+            // User can tap "Contribute Data" to see the authenticated state
             loadManagedUsers()
         }
     }
@@ -84,26 +86,6 @@ class LoginViewController: UIViewController {
         contentView = UIView()
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
-
-        // Create first paragraph text view (supports clickable links)
-        // Initially hidden, only shown when login form is displayed
-        firstParagraphTextView = UITextView()
-        firstParagraphTextView.isEditable = false
-        firstParagraphTextView.isScrollEnabled = false
-        firstParagraphTextView.backgroundColor = .clear
-        firstParagraphTextView.textColor = .white
-        firstParagraphTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        firstParagraphTextView.textContainer.lineFragmentPadding = 0
-        firstParagraphTextView.font = UIFont.systemFont(ofSize: 19)
-        firstParagraphTextView.text = ""
-        firstParagraphTextView.linkTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .underlineStyle: NSUnderlineStyle.single.rawValue
-        ]
-        firstParagraphTextView.delegate = self
-        firstParagraphTextView.translatesAutoresizingMaskIntoConstraints = false
-        firstParagraphTextView.isHidden = true
-        contentView.addSubview(firstParagraphTextView)
 
         // Create About button with semi-transparent background
         aboutButton = UIButton(type: .system)
@@ -319,11 +301,6 @@ class LoginViewController: UIViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
 
-            // First paragraph text view (hidden by default, shown when login form is displayed)
-            firstParagraphTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            firstParagraphTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            firstParagraphTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-
             // Contribute Data button - positioned at bottom
             contributeDataButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             contributeDataButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
@@ -342,8 +319,8 @@ class LoginViewController: UIViewController {
             aboutButton.heightAnchor.constraint(equalToConstant: 44),
             aboutButton.bottomAnchor.constraint(equalTo: recommendMasksButton.topAnchor, constant: -16),
 
-            // Email text field - positioned significantly higher to avoid keyboard and password autofill UI
-            emailTextField.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -150),
+            // Email text field - positioned at top of login form
+            emailTextField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 40),
             emailTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             emailTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 44),
@@ -446,7 +423,17 @@ class LoginViewController: UIViewController {
     }
 
     @objc private func contributeDataButtonTapped() {
-        showLoginForm()
+        // If user is already authenticated, show the authenticated state
+        // Otherwise, show the login form
+        if authService.isAuthenticated {
+            // User is already logged in, show the authenticated state
+            showLoginForm()
+            updateManagedUsersButton()
+            showAuthenticatedState()
+        } else {
+            // Show fresh login form
+            showLoginForm()
+        }
     }
 
     @objc private func termsCheckboxTapped() {
@@ -518,6 +505,10 @@ class LoginViewController: UIViewController {
         setLoading(true, isSignUp: false)
         hideError()
 
+        // Clear any old managed users before logging in
+        managedUsers = []
+        managedUsersButton.isHidden = true
+
         // Add some debugging
         print("Attempting login with email: \(email)")
         print("Using endpoint: https://www.breathesafe.xyz/users/log_in")
@@ -528,7 +519,7 @@ class LoginViewController: UIViewController {
 
                 switch result {
                 case .success(let user):
-                    print("Successfully logged in as: \(user.email)")
+                    print("Successfully logged in as: \(user.email) with ID: \(user.id)")
                     self?.loadManagedUsers()
                 case .failure(let error):
                     print("Login failed with error: \(error)")
@@ -616,16 +607,27 @@ class LoginViewController: UIViewController {
     }
 
     private func loadManagedUsers() {
+        // Clear old managed users first
+        managedUsers = []
+        managedUsersButton.isHidden = true
+        
+        print("Loading managed users for current user: \(authService.currentUser?.email ?? "unknown") (ID: \(authService.currentUser?.id ?? -1))")
+        
         authService.loadManagedUsers { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let users):
-                    print("Successfully loaded \(users.count) managed users")
+                    print("Successfully loaded \(users.count) managed users for user ID: \(self?.authService.currentUser?.id ?? -1)")
+                    if users.count > 0 {
+                        print("First managed user: \(users[0].displayName) (managed_id: \(users[0].managedId))")
+                    }
                     self?.managedUsers = users
                     self?.updateManagedUsersButton()
                     self?.showAuthenticatedState()
                 case .failure(let error):
                     print("Failed to load managed users: \(error)")
+                    // Still show authenticated state even if loading managed users fails
+                    self?.showAuthenticatedState()
                 }
             }
         }
@@ -735,49 +737,6 @@ class LoginViewController: UIViewController {
         // Hide background image to show solid #2F80ED color
         backgroundImageView.isHidden = true
         
-        // Update welcome text with clickable links and larger font
-        let loginText = """
-Fit testers: please contribute your data to improve this mask recommender. For more information, see the:
-• consent form
-
-Before registering, please review:
-• terms of service
-• disclaimer
-• privacy policy
-• onboarding
-
-If you have not registered:
-• register here
-"""
-        let attributedString = NSMutableAttributedString(string: loginText)
-        
-        // Set default font size to 19pt and white color
-        attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 19), range: NSRange(location: 0, length: loginText.count))
-        attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: loginText.count))
-        
-        // Define all links with their URLs
-        let links: [(text: String, url: String)] = [
-            ("consent form", "https://breathesafe.xyz/#/consent_form"),
-            ("terms of service", "https://www.breathesafe.xyz/#/terms_of_service"),
-            ("disclaimer", "https://www.breathesafe.xyz/#/disclaimer"),
-            ("privacy policy", "https://www.breathesafe.xyz/#/privacy"),
-            ("onboarding", "https://www.breathesafe.xyz/#/onboarding"),
-            ("register here", "https://www.breathesafe.xyz/#/signin")
-        ]
-        
-        // Apply link styling to each link
-        for link in links {
-            let range = (loginText as NSString).range(of: link.text)
-            if range.location != NSNotFound {
-                attributedString.addAttribute(.link, value: link.url, range: range)
-                attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: range)
-                attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
-            }
-        }
-        
-        firstParagraphTextView.attributedText = attributedString
-        firstParagraphTextView.isHidden = false
-        
         // Deactivate contribute button bottom constraint
         contributeButtonBottomConstraint.isActive = false
         
@@ -786,13 +745,33 @@ If you have not registered:
         recommendMasksButton.isHidden = true
         contributeDataButton.isHidden = true
         
-        // Show login form
-        emailTextField.isHidden = false
-        passwordTextField.isHidden = false
-        termsCheckbox.isHidden = false
-        termsTextView.isHidden = false
-        loginButton.isHidden = false
-        signUpButton.isHidden = false
+        // Check if already authenticated - if so, show authenticated state
+        // Otherwise show the login/signup form
+        if authService.isAuthenticated {
+            // User is already logged in, show authenticated state
+            emailTextField.isHidden = true
+            passwordTextField.isHidden = true
+            termsCheckbox.isHidden = true
+            termsTextView.isHidden = true
+            loginButton.isHidden = true
+            signUpButton.isHidden = true
+            
+            // Load managed users for the currently authenticated user
+            loadManagedUsers()
+        } else {
+            // Clear any old managed users data
+            managedUsers = []
+            managedUsersButton.isHidden = true
+            logoutButton.isHidden = true
+            
+            // Show login form
+            emailTextField.isHidden = false
+            passwordTextField.isHidden = false
+            termsCheckbox.isHidden = false
+            termsTextView.isHidden = false
+            loginButton.isHidden = false
+            signUpButton.isHidden = false
+        }
         
         // Add back button to navigation bar
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -809,6 +788,9 @@ If you have not registered:
     }
 
     @objc private func backToMainMenuTapped() {
+        // If user is authenticated, don't clear anything
+        // If user is not authenticated, we can optionally clear cookies here
+        // but it's better to do it on explicit logout
         showMainMenu()
     }
 
@@ -817,9 +799,6 @@ If you have not registered:
         
         // Show background image again
         backgroundImageView.isHidden = false
-        
-        // Hide welcome text on main menu
-        firstParagraphTextView.isHidden = true
         
         // Activate contribute button bottom constraint
         contributeButtonBottomConstraint.isActive = true

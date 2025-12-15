@@ -45,7 +45,7 @@ class AuthenticationService {
     
     /// Login with email and password
     func login(email: String, password: String, completion: @escaping (Result<User, AuthenticationError>) -> Void) {
-        // Get CSRF token first
+        // First, get CSRF token (this will create a new session)
         getCSRFToken { [weak self] csrfToken in
             guard let self = self else { return }
             
@@ -72,7 +72,21 @@ class AuthenticationService {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            
+            // Add CSRF token as header (in addition to form parameter for compatibility)
+            if let token = csrfToken {
+                request.setValue(token, forHTTPHeaderField: "X-CSRF-Token")
+            }
+            
             request.httpBody = formData
+            
+            print("Login request URL: \(url)")
+            print("Login request method: \(request.httpMethod ?? "unknown")")
+            print("Login request headers: \(request.allHTTPHeaderFields ?? [:])")
+            if let bodyString = String(data: formData, encoding: .utf8) {
+                print("Login request body: \(bodyString)")
+            }
             
             self.urlSession.dataTask(with: request) { [weak self] data, response, error in
                 DispatchQueue.main.async {
@@ -97,10 +111,22 @@ class AuthenticationService {
                     switch httpResponse.statusCode {
                     case 200, 201:
                         // Success - Rails returned HTML page, which means login was successful
+                        print("Login request successful, now getting current user info")
+                        
+                        // Debug: Print cookies after successful login
+                        if let url = URL(string: self?.baseURL ?? ""),
+                           let cookies = self?.cookieStorage.cookies(for: url) {
+                            print("Cookies after successful login:")
+                            for cookie in cookies {
+                                print("  - \(cookie.name): \(cookie.value)")
+                            }
+                        }
+                        
                         // Now get the current user info
                         self?.getCurrentUser { result in
                             switch result {
                             case .success(let user):
+                                print("Got current user: \(user.email) with ID: \(user.id)")
                                 self?.currentUser = user
                                 self?.saveCredentials(email: email, password: password)
                                 self?.delegate?.authenticationService(self!, didLogin: user)
@@ -154,6 +180,7 @@ class AuthenticationService {
                 self?.currentUser = nil
                 self?.sessionToken = nil
                 self?.clearCredentials()
+                self?.clearCookies()
                 
                 self?.delegate?.authenticationService(self!, didLogout: user)
                 completion(.success(()))
@@ -224,6 +251,14 @@ class AuthenticationService {
         guard let url = URL(string: "\(baseURL)/managed_users") else {
             completion(.failure(.invalidRequest))
             return
+        }
+        
+        // Debug: Print current cookies
+        if let cookies = cookieStorage.cookies(for: url) {
+            print("Cookies being sent with managed_users request:")
+            for cookie in cookies {
+                print("  - \(cookie.name): \(cookie.value)")
+            }
         }
         
         var request = URLRequest(url: url)
@@ -393,10 +428,39 @@ class AuthenticationService {
         SecItemDelete(passwordQuery as CFDictionary)
     }
     
+    /// Clear all cookies for the backend domain
+    private func clearCookies() {
+        guard let url = URL(string: baseURL) else { return }
+        
+        if let cookies = cookieStorage.cookies(for: url) {
+            for cookie in cookies {
+                print("Deleting cookie: \(cookie.name)")
+                cookieStorage.deleteCookie(cookie)
+            }
+        }
+        
+        // Also clear all cookies just to be safe
+        if let allCookies = cookieStorage.cookies {
+            for cookie in allCookies {
+                if cookie.domain.contains("breathesafe.xyz") {
+                    print("Deleting breathesafe cookie: \(cookie.name) for domain: \(cookie.domain)")
+                    cookieStorage.deleteCookie(cookie)
+                }
+            }
+        }
+    }
+    
     /// Create form-encoded data from parameters
     private func createFormData(from parameters: [String: String]) -> Data? {
+        // Create a custom character set that properly encodes form data
+        // We need to encode special characters including +, &, =, etc.
+        var allowedCharacters = CharacterSet.alphanumerics
+        allowedCharacters.insert(charactersIn: "-._~") // RFC 3986 unreserved characters
+        
         let formItems = parameters.map { key, value in
-            return "\(key)=\(value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+            let encodedKey = key.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? ""
+            let encodedValue = value.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? ""
+            return "\(encodedKey)=\(encodedValue)"
         }
         let formString = formItems.joined(separator: "&")
         return formString.data(using: .utf8)
