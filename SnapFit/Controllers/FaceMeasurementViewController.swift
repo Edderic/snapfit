@@ -130,16 +130,16 @@ class FaceMeasurementViewController: UIViewController {
         startButton.addTarget(self, action: #selector(startButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(startButton)
 
-        // Create export button
+        // Create save button (formerly export button)
         exportButton = UIButton(type: .system)
-        exportButton.setTitle("Export Data", for: .normal)
+        exportButton.setTitle("Save", for: .normal)
         exportButton.backgroundColor = UIColor.systemGreen
         exportButton.setTitleColor(UIColor.white, for: .normal)
         exportButton.layer.cornerRadius = 8
         exportButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         exportButton.isEnabled = false
         exportButton.translatesAutoresizingMaskIntoConstraints = false
-        exportButton.addTarget(self, action: #selector(exportButtonTapped(_:)), for: .touchUpInside)
+        exportButton.addTarget(self, action: #selector(saveButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(exportButton)
 
         // Create logout button (hidden, accessed via Other Options)
@@ -444,8 +444,8 @@ class FaceMeasurementViewController: UIViewController {
         }
     }
 
-    @objc func exportButtonTapped(_ sender: UIButton) {
-        exportData()
+    @objc func saveButtonTapped(_ sender: UIButton) {
+        saveData()
     }
 
     private func openViewDataPage() {
@@ -608,65 +608,28 @@ class FaceMeasurementViewController: UIViewController {
         measurementLabel.text = measurementText
     }
 
-    // MARK: - Data Export
-    private func exportData() {
+    // MARK: - Data Save
+    
+    private func saveData() {
         let measurements = measurementEngine.exportMeasurements()
 
-        // Request user consent if not already given
-        if !dataExportManager.hasUserConsent {
-            dataExportManager.requestUserConsent(from: self) { [weak self] consented in
-                if consented {
-                    self?.performExport(measurements)
-                } else {
-                    self?.showLocalExportOptions(measurements)
-                }
-            }
-        } else {
-            performExport(measurements)
-        }
-    }
-
-    private func performExport(_ measurements: [String: Any]) {
-        let alert = UIAlertController(title: "Export Data", message: "Choose how to export your measurements", preferredStyle: .actionSheet)
-
-        // Prioritize server export if authenticated
+        // Always try to save to server first if authenticated
         if authService?.isAuthenticated == true && selectedUser != nil {
-            alert.addAction(UIAlertAction(title: "Send to BreatheSafe Server", style: .default) { _ in
-                self.sendToServer(measurements)
-            })
+            sendToServer(measurements)
+        } else {
+            // User is not authenticated, show local save options
+            showLocalSaveOptions(measurements)
         }
-
-        alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
-            self.dataExportManager.shareMeasurements(measurements, from: self)
-        })
-
-        alert.addAction(UIAlertAction(title: "Save JSON to Files", style: .default) { _ in
-            if let fileURL = self.dataExportManager.saveToLocalFile(measurements) {
-                self.showSuccess("Data saved to: \(fileURL.lastPathComponent)")
-            }
-        })
-
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-
-        // For iPad
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = exportButton
-            popover.sourceRect = exportButton.bounds
-        }
-
-        present(alert, animated: true)
     }
 
-    private func showLocalExportOptions(_ measurements: [String: Any]) {
-        let alert = UIAlertController(title: "Export Data (Local Only)", message: "Your data will not be shared with external servers", preferredStyle: .actionSheet)
-
-        alert.addAction(UIAlertAction(title: "Share JSON via System", style: .default) { _ in
-            self.dataExportManager.shareMeasurements(measurements, from: self)
-        })
+    private func showLocalSaveOptions(_ measurements: [String: Any]) {
+        let alert = UIAlertController(title: "Save Data (Local Only)", message: "No internet connection. Your data will be saved locally.", preferredStyle: .actionSheet)
 
         alert.addAction(UIAlertAction(title: "Save JSON to Files", style: .default) { _ in
             if let fileURL = self.dataExportManager.saveToLocalFile(measurements) {
-                self.showSuccess("Data saved to: \(fileURL.lastPathComponent)")
+                self.showSuccess("Data saved locally to: \(fileURL.lastPathComponent)")
+                // Navigate back after local save
+                self.navigateBackToAddEditUser()
             }
         })
 
@@ -682,35 +645,73 @@ class FaceMeasurementViewController: UIViewController {
     }
 
     private func sendToServer(_ measurements: [String: Any]) {
-        // TODO: Uncomment this once the new model files are added to the Xcode project
         guard let selectedUser = selectedUser,
               let apiClient = apiClient else {
             showError("No user selected or API client not available")
             return
         }
 
-        // // Check if user is authenticated
         guard let authService = authService, authService.isAuthenticated else {
             showError("User is not authenticated. Please login first.")
             return
         }
 
+        // Show loading indicator
+        exportButton.isEnabled = false
+        exportButton.setTitle("Saving...", for: .normal)
+
         // Export to Rails backend
         apiClient.exportFacialMeasurements(measurements, for: selectedUser.managedId ?? 0) { [weak self] result in
             DispatchQueue.main.async {
+                self?.exportButton.isEnabled = true
+                self?.exportButton.setTitle("Save", for: .normal)
+                
                 switch result {
                 case .success:
-                    self?.showSuccess("Data sent to server successfully!")
+                    self?.showSuccess("Data saved successfully!")
+                    // Navigate back to AddEditUserViewController after successful save
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        self?.navigateBackToAddEditUser()
+                    }
                 case .failure(let error):
-                    self?.showError("Failed to send data: \(error.localizedDescription)")
-
-                    // If there's a network error, save offline
+                    // If there's a network error, offer to save offline
                     if case APIError.networkError = error {
-                        self?.saveOffline(measurements)
+                        self?.offerLocalSave(measurements, error: error)
+                    } else {
+                        self?.showError("Failed to save data: \(error.localizedDescription)")
                     }
                 }
             }
         }
+    }
+    
+    private func offerLocalSave(_ measurements: [String: Any], error: Error) {
+        let alert = UIAlertController(
+            title: "No Internet Connection",
+            message: "Unable to save to server. Would you like to save locally instead?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Save Locally", style: .default) { [weak self] _ in
+            if let fileURL = self?.dataExportManager.saveToLocalFile(measurements) {
+                self?.showSuccess("Data saved locally to: \(fileURL.lastPathComponent)")
+                // Navigate back after local save
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self?.navigateBackToAddEditUser()
+                }
+            } else {
+                self?.showError("Failed to save locally")
+            }
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+    
+    private func navigateBackToAddEditUser() {
+        // Dismiss this view controller to return to AddEditUserViewController
+        dismiss(animated: true)
     }
 
     // TODO: Uncomment these methods once the new model files are added to the Xcode project

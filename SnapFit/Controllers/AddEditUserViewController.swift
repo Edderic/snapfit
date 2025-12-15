@@ -73,6 +73,15 @@ class AddEditUserViewController: UIViewController {
         updateUIForCurrentSection()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Refresh facial measurements section if we're on that section
+        if currentSection == .facialMeasurements {
+            updateUIForCurrentSection()
+        }
+    }
+    
     // MARK: - Setup
     private func setupUI() {
         title = managedUser == nil ? "Add User" : "Edit User"
@@ -311,31 +320,104 @@ class AddEditUserViewController: UIViewController {
     private func setupFacialMeasurementsSection() {
         messageLabel.text = "Facial measurements help determine which masks will fit best."
         
-        // Check if user has measurements
-        if let user = managedUser, let fmPercent = user.fmPercentComplete, fmPercent >= 100 {
-            // Show aggregated measurements table
-            let tableLabel = createLabel(text: "Aggregated Measurements")
-            tableLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
-            contentStackView.addArrangedSubview(tableLabel)
-            
-            // TODO: Fetch and display actual measurements
-            let measurements = [
-                ("Nose", "Incomplete"),
-                ("Strap", "Incomplete"),
-                ("Top Cheek", "Incomplete"),
-                ("Mid Cheek", "Incomplete"),
-                ("Chin", "Incomplete")
-            ]
-            
-            for (name, value) in measurements {
-                let row = createMeasurementRow(name: name, value: value)
-                contentStackView.addArrangedSubview(row)
-            }
+        // Fetch and display actual measurements
+        if let userId = self.userId {
+            fetchFacialMeasurements(for: userId)
         } else {
             let noDataLabel = createLabel(text: "No facial measurements yet.")
             contentStackView.addArrangedSubview(noDataLabel)
+            
+            // Add button
+            addFacialMeasurementsButton()
+        }
+    }
+    
+    private func fetchFacialMeasurements(for userId: Int) {
+        guard let url = URL(string: "https://www.breathesafe.xyz/users/\(userId)/facial_measurements") else {
+            displayNoMeasurements()
+            return
         }
         
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Get session cookies
+        if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+            let cookieHeader = HTTPCookie.requestHeaderFields(with: cookies)
+            for (key, value) in cookieHeader {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error fetching facial measurements: \(error)")
+                    self.displayNoMeasurements()
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200,
+                      let data = data else {
+                    self.displayNoMeasurements()
+                    return
+                }
+                
+                // Parse the response
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let facialMeasurement = json["facial_measurement"] as? [String: Any],
+                   let arkit = facialMeasurement["arkit"] as? [String: Any] {
+                    self.displayMeasurements(arkit: arkit)
+                } else {
+                    self.displayNoMeasurements()
+                }
+            }
+        }.resume()
+    }
+    
+    private func displayMeasurements(arkit: [String: Any]) {
+        // Show aggregated measurements table
+        let tableLabel = createLabel(text: "Aggregated Measurements")
+        tableLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        contentStackView.addArrangedSubview(tableLabel)
+        
+        // Extract aggregated measurements
+        let measurements = [
+            ("Nose", arkit["nose"] as? Double),
+            ("Strap", arkit["strap"] as? Double),
+            ("Top Cheek", arkit["top_cheek"] as? Double),
+            ("Mid Cheek", arkit["mid_cheek"] as? Double),
+            ("Chin", arkit["chin"] as? Double)
+        ]
+        
+        for (name, value) in measurements {
+            let valueString: String
+            if let val = value, val > 0 {
+                valueString = String(format: "%.1f", val)
+            } else {
+                valueString = "Incomplete"
+            }
+            let row = createMeasurementRow(name: name, value: valueString)
+            contentStackView.addArrangedSubview(row)
+        }
+        
+        // Add button
+        addFacialMeasurementsButton()
+    }
+    
+    private func displayNoMeasurements() {
+        let noDataLabel = createLabel(text: "No facial measurements yet.")
+        contentStackView.addArrangedSubview(noDataLabel)
+        
+        // Add button
+        addFacialMeasurementsButton()
+    }
+    
+    private func addFacialMeasurementsButton() {
         // Add Facial Measurements button
         let addMeasurementsButton = UIButton(type: .system)
         addMeasurementsButton.setTitle("Add Facial Measurements", for: .normal)
