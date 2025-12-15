@@ -68,6 +68,8 @@ class LoginViewController: UIViewController {
         // Update navigation bar based on authentication state
         if isShowingLoginForm && authService.isAuthenticated {
             updateNavigationBarForRespiratoryUsers()
+            // Refresh managed users when returning to this view
+            loadManagedUsers()
         }
     }
     
@@ -576,8 +578,10 @@ class LoginViewController: UIViewController {
     }
 
     @objc private func addUserButtonTapped() {
-        print("Add user button tapped - TODO: Implement AddEditUserViewController")
-        // TODO: Navigate to AddEditUserViewController
+        let addEditVC = AddEditUserViewController(authService: authService, apiClient: apiClient)
+        let navController = UINavigationController(rootViewController: addEditVC)
+        navController.modalPresentationStyle = .fullScreen
+        present(navController, animated: true)
     }
     
     @objc private func helpButtonTapped() {
@@ -1145,12 +1149,19 @@ extension LoginViewController: UITableViewDelegate, UITableViewDataSource {
         nameLabel.textColor = .white
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        let completionLabel = UILabel()
-        completionLabel.text = "Complete"
-        completionLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
-        completionLabel.textColor = .white
-        completionLabel.textAlignment = .center
-        completionLabel.translatesAutoresizingMaskIntoConstraints = false
+        let demogLabel = UILabel()
+        demogLabel.text = "Demog"
+        demogLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        demogLabel.textColor = .white
+        demogLabel.textAlignment = .center
+        demogLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let facialLabel = UILabel()
+        facialLabel.text = "Facial"
+        facialLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        facialLabel.textColor = .white
+        facialLabel.textAlignment = .center
+        facialLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let actionsLabel = UILabel()
         actionsLabel.text = "Actions"
@@ -1160,19 +1171,24 @@ extension LoginViewController: UITableViewDelegate, UITableViewDataSource {
         actionsLabel.translatesAutoresizingMaskIntoConstraints = false
         
         headerView.addSubview(nameLabel)
-        headerView.addSubview(completionLabel)
+        headerView.addSubview(demogLabel)
+        headerView.addSubview(facialLabel)
         headerView.addSubview(actionsLabel)
         
         NSLayoutConstraint.activate([
             nameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 12),
             nameLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            nameLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.4),
+            nameLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.3),
             
-            completionLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
-            completionLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            completionLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.2),
+            demogLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
+            demogLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            demogLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.2),
             
-            actionsLabel.leadingAnchor.constraint(equalTo: completionLabel.trailingAnchor, constant: 8),
+            facialLabel.leadingAnchor.constraint(equalTo: demogLabel.trailingAnchor, constant: 8),
+            facialLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            facialLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.2),
+            
+            actionsLabel.leadingAnchor.constraint(equalTo: facialLabel.trailingAnchor, constant: 8),
             actionsLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -12),
             actionsLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
         ])

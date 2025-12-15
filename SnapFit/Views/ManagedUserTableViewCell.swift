@@ -11,7 +11,16 @@ class ManagedUserTableViewCell: UITableViewCell {
         return label
     }()
     
-    private let completionLabel: UILabel = {
+    private let demogLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textAlignment = .center
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let facialLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16)
         label.textAlignment = .center
@@ -42,7 +51,8 @@ class ManagedUserTableViewCell: UITableViewCell {
         selectionStyle = .none
         
         contentView.addSubview(nameLabel)
-        contentView.addSubview(completionLabel)
+        contentView.addSubview(demogLabel)
+        contentView.addSubview(facialLabel)
         contentView.addSubview(actionsButton)
         
         // Create gear icon
@@ -51,18 +61,23 @@ class ManagedUserTableViewCell: UITableViewCell {
         actionsButton.addTarget(self, action: #selector(actionsButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            // Name label - 40% width
+            // Name label - 30% width
             nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             nameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            nameLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.4),
+            nameLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3),
             
-            // Completion label - 20% width
-            completionLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
-            completionLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            completionLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.2),
+            // Demog label - 20% width
+            demogLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
+            demogLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            demogLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.2),
+            
+            // Facial label - 20% width
+            facialLabel.leadingAnchor.constraint(equalTo: demogLabel.trailingAnchor, constant: 8),
+            facialLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            facialLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.2),
             
             // Actions button - remaining space
-            actionsButton.leadingAnchor.constraint(equalTo: completionLabel.trailingAnchor, constant: 8),
+            actionsButton.leadingAnchor.constraint(equalTo: facialLabel.trailingAnchor, constant: 8),
             actionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
             actionsButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             actionsButton.widthAnchor.constraint(equalToConstant: 30),
@@ -126,18 +141,25 @@ class ManagedUserTableViewCell: UITableViewCell {
     func configure(with user: ManagedUser) {
         nameLabel.text = user.displayName
         
-        // Configure completion indicator
-        if let percentComplete = user.fmPercentComplete {
-            if percentComplete >= 100 {
-                completionLabel.text = "✓"
-                completionLabel.textColor = .green
+        // Configure demographics percentage
+        if let demogPercent = user.demogPercentComplete {
+            demogLabel.text = String(format: "%.0f%%", demogPercent)
+        } else {
+            demogLabel.text = "0%"
+        }
+        
+        // Configure facial measurements completion indicator
+        if let fmPercent = user.fmPercentComplete {
+            if fmPercent >= 100 {
+                facialLabel.text = "✓"
+                facialLabel.textColor = .green
             } else {
-                completionLabel.text = "✗"
-                completionLabel.textColor = .red
+                facialLabel.text = "✗"
+                facialLabel.textColor = .red
             }
         } else {
-            completionLabel.text = "✗"
-            completionLabel.textColor = .red
+            facialLabel.text = "✗"
+            facialLabel.textColor = .red
         }
     }
 }
