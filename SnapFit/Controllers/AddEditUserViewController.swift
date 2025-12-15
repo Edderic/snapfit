@@ -285,7 +285,8 @@ class AddEditUserViewController: UIViewController {
         ]
         
         for (index, option) in raceOptions.enumerated() {
-            let button = createRadioButton(title: option, tag: 200 + index, isSelected: raceEthnicity == option)
+            let isSelected = raceEthnicity == option
+            let button = createRadioButton(title: option, tag: 200 + index, isSelected: isSelected)
             contentStackView.addArrangedSubview(button)
         }
         
@@ -304,7 +305,8 @@ class AddEditUserViewController: UIViewController {
         ]
         
         for (index, option) in genderOptions.enumerated() {
-            let button = createRadioButton(title: option, tag: 300 + index, isSelected: genderAndSex == option)
+            let isSelected = genderAndSex == option
+            let button = createRadioButton(title: option, tag: 300 + index, isSelected: isSelected)
             contentStackView.addArrangedSubview(button)
             
             // Add "Other" text field if "Other" is selected
@@ -506,23 +508,45 @@ class AddEditUserViewController: UIViewController {
                 // Parse the response
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let profile = json["profile"] as? [String: Any] {
-                    print("Loaded profile: \(profile)")
                     
                     // Populate profile data
                     if let id = profile["id"] as? Int {
                         self.profileId = id
                     }
-                    if let raceEthnicity = profile["race_ethnicity"] as? String {
+                    
+                    // Handle race_ethnicity (check for NSNull)
+                    if let raceEthnicity = profile["race_ethnicity"] as? String, !raceEthnicity.isEmpty {
                         self.raceEthnicity = raceEthnicity
+                    } else if profile["race_ethnicity"] is NSNull {
+                        self.raceEthnicity = nil
                     }
-                    if let genderAndSex = profile["gender_and_sex"] as? String {
+                    
+                    // Handle gender_and_sex (check for NSNull)
+                    if let genderAndSex = profile["gender_and_sex"] as? String, !genderAndSex.isEmpty {
                         self.genderAndSex = genderAndSex
+                    } else if profile["gender_and_sex"] is NSNull {
+                        self.genderAndSex = nil
                     }
-                    if let otherGender = profile["other_gender"] as? String {
+                    
+                    // Handle other_gender (check for NSNull)
+                    if let otherGender = profile["other_gender"] as? String, !otherGender.isEmpty {
                         self.otherGender = otherGender
+                    } else if profile["other_gender"] is NSNull {
+                        self.otherGender = nil
                     }
-                    if let yearOfBirth = profile["year_of_birth"] as? Int {
-                        self.yearOfBirth = yearOfBirth
+                    
+                    // Handle year_of_birth (check for NSNull and handle String/Int)
+                    if let yearValue = profile["year_of_birth"] {
+                        if yearValue is NSNull {
+                            self.yearOfBirth = nil
+                        } else if let yearOfBirth = yearValue as? Int {
+                            self.yearOfBirth = yearOfBirth
+                        } else if let yearNumber = yearValue as? NSNumber {
+                            self.yearOfBirth = yearNumber.intValue
+                        } else if let yearString = yearValue as? String, let yearInt = Int(yearString) {
+                            // Encrypted fields may be returned as strings
+                            self.yearOfBirth = yearInt
+                        }
                     }
                 }
                 
@@ -580,9 +604,13 @@ class AddEditUserViewController: UIViewController {
         
         // Select current year or provided year
         let currentYear = Calendar.current.component(.year, from: Date())
+        
         if let year = selectedYear, year >= 1900, year < currentYear {
             let row = currentYear - year - 1
-            picker.selectRow(row, inComponent: 0, animated: false)
+            // Need to select the row after the picker is added to the view hierarchy
+            DispatchQueue.main.async {
+                picker.selectRow(row, inComponent: 0, animated: false)
+            }
         }
         
         return picker
