@@ -31,6 +31,10 @@ class AboutViewController: UIViewController {
         title = "About SnapFit"
         // Set background color to #2F80ED
         view.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        
+        // Set navigation bar title text color to white
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
 
         // Add back button
         navigationItem.leftBarButtonItem = UIBarButtonItem(

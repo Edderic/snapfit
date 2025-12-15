@@ -1,4 +1,5 @@
 import UIKit
+import SafariServices
 
 /// View controller for user authentication
 class LoginViewController: UIViewController {
@@ -13,8 +14,12 @@ class LoginViewController: UIViewController {
     private var contributeDataButton: UIButton!
     private var emailTextField: UITextField!
     private var passwordTextField: UITextField!
+    private var termsCheckbox: UIButton!
+    private var termsTextView: UITextView!
     private var loginButton: UIButton!
+    private var signUpButton: UIButton!
     private var activityIndicator: UIActivityIndicatorView!
+    private var signUpActivityIndicator: UIActivityIndicatorView!
     private var errorLabel: UILabel!
     private var managedUsersButton: UIButton!
     private var logoutButton: UIButton!
@@ -27,6 +32,7 @@ class LoginViewController: UIViewController {
     private var managedUsers: [ManagedUser] = []
     private var isShowingLoginForm = false
     private var contributeButtonBottomConstraint: NSLayoutConstraint!
+    private var isTermsAgreed = false
 
     init() {
         self.apiClient = APIClient(authService: authService)
@@ -56,6 +62,10 @@ class LoginViewController: UIViewController {
         title = "SnapFit"
         // Set background color using hex #2F80ED
         view.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        
+        // Set navigation bar title text color to white
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
 
         // Create background image view
         backgroundImageView = UIImageView()
@@ -149,6 +159,60 @@ class LoginViewController: UIViewController {
         passwordTextField.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(passwordTextField)
 
+        // Create terms checkbox (styled as a button)
+        termsCheckbox = UIButton(type: .custom)
+        termsCheckbox.setImage(UIImage(systemName: "square"), for: .normal)
+        termsCheckbox.setImage(UIImage(systemName: "checkmark.square.fill"), for: .selected)
+        termsCheckbox.tintColor = .white
+        termsCheckbox.translatesAutoresizingMaskIntoConstraints = false
+        termsCheckbox.addTarget(self, action: #selector(termsCheckboxTapped), for: .touchUpInside)
+        contentView.addSubview(termsCheckbox)
+
+        // Create terms text view with clickable links
+        termsTextView = UITextView()
+        termsTextView.isEditable = false
+        termsTextView.isScrollEnabled = false
+        termsTextView.backgroundColor = .clear
+        termsTextView.textColor = .white
+        termsTextView.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        termsTextView.textContainer.lineFragmentPadding = 0
+        termsTextView.font = UIFont.systemFont(ofSize: 14)
+        termsTextView.linkTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+        termsTextView.delegate = self
+        termsTextView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Set up the attributed text with links
+        let termsText = "By signing up, you agree to our Terms of Service, Consent form, Disclaimer, and Privacy Policy."
+        let attributedString = NSMutableAttributedString(string: termsText)
+        
+        // Set default attributes
+        attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location: 0, length: termsText.count))
+        attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: termsText.count))
+        
+        // Define links
+        let links: [(text: String, url: String)] = [
+            ("Terms of Service", "https://www.breathesafe.xyz/#/terms_of_service"),
+            ("Consent form", "https://www.breathesafe.xyz/#/consent_form"),
+            ("Disclaimer", "https://www.breathesafe.xyz/#/disclaimer"),
+            ("Privacy Policy", "https://www.breathesafe.xyz/#/privacy")
+        ]
+        
+        // Apply link styling
+        for link in links {
+            let range = (termsText as NSString).range(of: link.text)
+            if range.location != NSNotFound {
+                attributedString.addAttribute(.link, value: link.url, range: range)
+                attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: range)
+                attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+            }
+        }
+        
+        termsTextView.attributedText = attributedString
+        contentView.addSubview(termsTextView)
+
         // Create login button with orange background
         loginButton = UIButton(type: .system)
         loginButton.setTitle("Login", for: .normal)
@@ -160,11 +224,30 @@ class LoginViewController: UIViewController {
         loginButton.addTarget(self, action: #selector(loginButtonTapped(_:)), for: .touchUpInside)
         contentView.addSubview(loginButton)
 
-        // Create activity indicator
+        // Create activity indicator for login button
         activityIndicator = UIActivityIndicatorView(style: .medium)
         activityIndicator.hidesWhenStopped = true
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(activityIndicator)
+
+        // Create sign up button with green background
+        signUpButton = UIButton(type: .system)
+        signUpButton.setTitle("Sign Up", for: .normal)
+        signUpButton.backgroundColor = UIColor(red: 0.2, green: 0.8, blue: 0.4, alpha: 0.8)
+        signUpButton.setTitleColor(UIColor.white, for: .normal)
+        signUpButton.layer.cornerRadius = 8
+        signUpButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        signUpButton.translatesAutoresizingMaskIntoConstraints = false
+        signUpButton.addTarget(self, action: #selector(signUpButtonTapped(_:)), for: .touchUpInside)
+        signUpButton.isEnabled = false
+        signUpButton.alpha = 0.5 // Visual indication that it's disabled
+        contentView.addSubview(signUpButton)
+
+        // Create activity indicator for sign up button
+        signUpActivityIndicator = UIActivityIndicatorView(style: .medium)
+        signUpActivityIndicator.hidesWhenStopped = true
+        signUpActivityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(signUpActivityIndicator)
 
         // Create error label
         errorLabel = UILabel()
@@ -203,7 +286,10 @@ class LoginViewController: UIViewController {
         // Hide login form initially
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
+        termsCheckbox.isHidden = true
+        termsTextView.isHidden = true
         loginButton.isHidden = true
+        signUpButton.isHidden = true
 
         setupConstraints()
     }
@@ -268,15 +354,36 @@ class LoginViewController: UIViewController {
             passwordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             passwordTextField.heightAnchor.constraint(equalToConstant: 44),
 
-            // Login button - below Password field
-            loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 24),
+            // Terms checkbox - below Password field
+            termsCheckbox.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 16),
+            termsCheckbox.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            termsCheckbox.widthAnchor.constraint(equalToConstant: 30),
+            termsCheckbox.heightAnchor.constraint(equalToConstant: 30),
+
+            // Terms text view - next to checkbox
+            termsTextView.leadingAnchor.constraint(equalTo: termsCheckbox.trailingAnchor, constant: 8),
+            termsTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            termsTextView.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 16),
+
+            // Login button - below Terms section
+            loginButton.topAnchor.constraint(equalTo: termsTextView.bottomAnchor, constant: 16),
             loginButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             loginButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             loginButton.heightAnchor.constraint(equalToConstant: 50),
 
-            // Activity indicator
+            // Activity indicator for login button
             activityIndicator.centerXAnchor.constraint(equalTo: loginButton.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: loginButton.centerYAnchor),
+
+            // Sign Up button - below Login button
+            signUpButton.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 16),
+            signUpButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            signUpButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            signUpButton.heightAnchor.constraint(equalToConstant: 50),
+
+            // Activity indicator for sign up button
+            signUpActivityIndicator.centerXAnchor.constraint(equalTo: signUpButton.centerXAnchor),
+            signUpActivityIndicator.centerYAnchor.constraint(equalTo: signUpButton.centerYAnchor),
 
             // Error label - hidden, errors now shown in alerts
             errorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
@@ -342,6 +449,15 @@ class LoginViewController: UIViewController {
         showLoginForm()
     }
 
+    @objc private func termsCheckboxTapped() {
+        isTermsAgreed.toggle()
+        termsCheckbox.isSelected = isTermsAgreed
+        
+        // Enable/disable sign up button based on checkbox state
+        signUpButton.isEnabled = isTermsAgreed
+        signUpButton.alpha = isTermsAgreed ? 1.0 : 0.5
+    }
+
     @objc private func loginButtonTapped(_ sender: UIButton) {
         // Dismiss keyboard when login button is tapped
         view.endEditing(true)
@@ -353,6 +469,24 @@ class LoginViewController: UIViewController {
         }
 
         login(email: email, password: password)
+    }
+
+    @objc private func signUpButtonTapped(_ sender: UIButton) {
+        // Dismiss keyboard when sign up button is tapped
+        view.endEditing(true)
+        
+        guard let email = emailTextField.text, !email.isEmpty,
+              let password = passwordTextField.text, !password.isEmpty else {
+            showError("Please enter both email and password")
+            return
+        }
+
+        guard isTermsAgreed else {
+            showError("Please check the box saying that you agree with the Terms of Service, Consent Form, Disclaimer, and Privacy Policy")
+            return
+        }
+
+        signUp(email: email, password: password)
     }
 
     @objc private func managedUsersButtonTapped(_ sender: UIButton) {
@@ -381,7 +515,7 @@ class LoginViewController: UIViewController {
 
     // MARK: - Authentication Methods
     private func login(email: String, password: String) {
-        setLoading(true)
+        setLoading(true, isSignUp: false)
         hideError()
 
         // Add some debugging
@@ -390,7 +524,7 @@ class LoginViewController: UIViewController {
 
         authService.login(email: email, password: password) { [weak self] result in
             DispatchQueue.main.async {
-                self?.setLoading(false)
+                self?.setLoading(false, isSignUp: false)
 
                 switch result {
                 case .success(let user):
@@ -402,6 +536,83 @@ class LoginViewController: UIViewController {
                 }
             }
         }
+    }
+
+    private func signUp(email: String, password: String) {
+        setLoading(true, isSignUp: true)
+        hideError()
+
+        print("Attempting sign up with email: \(email)")
+        print("Using endpoint: https://www.breathesafe.xyz/users")
+
+        // Create the request
+        guard let url = URL(string: "https://www.breathesafe.xyz/users") else {
+            setLoading(false, isSignUp: true)
+            showError("Invalid URL")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let body: [String: Any] = [
+            "user": [
+                "email": email,
+                "password": password,
+                "accept_consent": true
+            ]
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            setLoading(false, isSignUp: true)
+            showError("Failed to encode request: \(error.localizedDescription)")
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.setLoading(false, isSignUp: true)
+
+                if let error = error {
+                    print("Sign up error: \(error)")
+                    self?.showError("Sign up failed: \(error.localizedDescription)")
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    self?.showError("Invalid response from server")
+                    return
+                }
+
+                print("Sign up response status code: \(httpResponse.statusCode)")
+
+                if httpResponse.statusCode == 201 {
+                    // Success
+                    self?.showConfirmation("Sent a confirmation email to \(email). Please check your email.")
+                    // Clear the form
+                    self?.emailTextField.text = ""
+                    self?.passwordTextField.text = ""
+                    self?.isTermsAgreed = false
+                    self?.termsCheckbox.isSelected = false
+                    self?.signUpButton.isEnabled = false
+                    self?.signUpButton.alpha = 0.5
+                } else {
+                    // Parse error message if available
+                    if let data = data,
+                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let errors = json["errors"] as? [String: [String]] {
+                        let errorMessages = errors.values.flatMap { $0 }.joined(separator: ", ")
+                        self?.showError("Sign up failed: \(errorMessages)")
+                    } else {
+                        self?.showError("Sign up failed with status code: \(httpResponse.statusCode)")
+                    }
+                }
+            }
+        }.resume()
     }
 
     private func loadManagedUsers() {
@@ -433,7 +644,10 @@ class LoginViewController: UIViewController {
         // Hide login form
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
+        termsCheckbox.isHidden = true
+        termsTextView.isHidden = true
         loginButton.isHidden = true
+        signUpButton.isHidden = true
         errorLabel.isHidden = true
         
         // Show logout button
@@ -475,20 +689,38 @@ class LoginViewController: UIViewController {
     }
 
     // MARK: - UI Helper Methods
-    private func setLoading(_ loading: Bool) {
-        if loading {
-            activityIndicator.startAnimating()
-            loginButton.setTitle("", for: .normal)
-            loginButton.isEnabled = false
+    private func setLoading(_ loading: Bool, isSignUp: Bool) {
+        if isSignUp {
+            if loading {
+                signUpActivityIndicator.startAnimating()
+                signUpButton.setTitle("", for: .normal)
+                signUpButton.isEnabled = false
+            } else {
+                signUpActivityIndicator.stopAnimating()
+                signUpButton.setTitle("Sign Up", for: .normal)
+                signUpButton.isEnabled = isTermsAgreed
+            }
         } else {
-            activityIndicator.stopAnimating()
-            loginButton.setTitle("Login", for: .normal)
-            loginButton.isEnabled = true
+            if loading {
+                activityIndicator.startAnimating()
+                loginButton.setTitle("", for: .normal)
+                loginButton.isEnabled = false
+            } else {
+                activityIndicator.stopAnimating()
+                loginButton.setTitle("Login", for: .normal)
+                loginButton.isEnabled = true
+            }
         }
     }
 
     private func showError(_ message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func showConfirmation(_ message: String) {
+        let alert = UIAlertController(title: "Success", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
@@ -504,27 +736,43 @@ class LoginViewController: UIViewController {
         backgroundImageView.isHidden = true
         
         // Update welcome text with clickable links and larger font
-        let loginText = "Fit testers: please contribute your data to improve this mask recommender. For more information, see the:\n• consent form\n• register here"
+        let loginText = """
+Fit testers: please contribute your data to improve this mask recommender. For more information, see the:
+• consent form
+
+Before registering, please review:
+• terms of service
+• disclaimer
+• privacy policy
+• onboarding
+
+If you have not registered:
+• register here
+"""
         let attributedString = NSMutableAttributedString(string: loginText)
         
         // Set default font size to 19pt and white color
         attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 19), range: NSRange(location: 0, length: loginText.count))
         attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: loginText.count))
         
-        // Make "consent form" clickable with white underlined styling
-        let consentFormRange = (loginText as NSString).range(of: "consent form")
-        if consentFormRange.location != NSNotFound {
-            attributedString.addAttribute(.link, value: "https://breathesafe.xyz/#/consent_form", range: consentFormRange)
-            attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: consentFormRange)
-            attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: consentFormRange)
-        }
+        // Define all links with their URLs
+        let links: [(text: String, url: String)] = [
+            ("consent form", "https://breathesafe.xyz/#/consent_form"),
+            ("terms of service", "https://www.breathesafe.xyz/#/terms_of_service"),
+            ("disclaimer", "https://www.breathesafe.xyz/#/disclaimer"),
+            ("privacy policy", "https://www.breathesafe.xyz/#/privacy"),
+            ("onboarding", "https://www.breathesafe.xyz/#/onboarding"),
+            ("register here", "https://www.breathesafe.xyz/#/signin")
+        ]
         
-        // Make "register here" clickable with white underlined styling
-        let registerRange = (loginText as NSString).range(of: "register here")
-        if registerRange.location != NSNotFound {
-            attributedString.addAttribute(.link, value: "https://www.breathesafe.xyz/#/signin", range: registerRange)
-            attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: registerRange)
-            attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: registerRange)
+        // Apply link styling to each link
+        for link in links {
+            let range = (loginText as NSString).range(of: link.text)
+            if range.location != NSNotFound {
+                attributedString.addAttribute(.link, value: link.url, range: range)
+                attributedString.addAttribute(.foregroundColor, value: UIColor.white, range: range)
+                attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+            }
         }
         
         firstParagraphTextView.attributedText = attributedString
@@ -541,7 +789,10 @@ class LoginViewController: UIViewController {
         // Show login form
         emailTextField.isHidden = false
         passwordTextField.isHidden = false
+        termsCheckbox.isHidden = false
+        termsTextView.isHidden = false
         loginButton.isHidden = false
+        signUpButton.isHidden = false
         
         // Add back button to navigation bar
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -581,7 +832,10 @@ class LoginViewController: UIViewController {
         // Hide login form and authenticated state
         emailTextField.isHidden = true
         passwordTextField.isHidden = true
+        termsCheckbox.isHidden = true
+        termsTextView.isHidden = true
         loginButton.isHidden = true
+        signUpButton.isHidden = true
         errorLabel.isHidden = true
         managedUsersButton.isHidden = true
         logoutButton.isHidden = true
@@ -592,6 +846,10 @@ class LoginViewController: UIViewController {
         // Clear fields
         emailTextField.text = ""
         passwordTextField.text = ""
+        isTermsAgreed = false
+        termsCheckbox.isSelected = false
+        signUpButton.isEnabled = false
+        signUpButton.alpha = 0.5
         
         // Dismiss keyboard
         view.endEditing(true)
@@ -655,7 +913,10 @@ extension LoginViewController: OfflineSyncManagerDelegate {
 // MARK: - UITextViewDelegate
 extension LoginViewController: UITextViewDelegate {
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
-        UIApplication.shared.open(URL)
+        // Open link in SFSafariViewController
+        let safariVC = SFSafariViewController(url: URL)
+        safariVC.preferredControlTintColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        present(safariVC, animated: true)
         return false
     }
 }

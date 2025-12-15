@@ -66,6 +66,10 @@ class FaceMeasurementViewController: UIViewController {
             title = "Face Measurement"
         }
         view.backgroundColor = UIColor.systemBackground
+        
+        // Set navigation bar title text color to white
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
 
         // Create ARSCNView
         sceneView = ARSCNView()
