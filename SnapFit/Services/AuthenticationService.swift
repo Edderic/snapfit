@@ -467,7 +467,7 @@ class AuthenticationService {
     }
     
     /// Get CSRF token from Rails backend
-    private func getCSRFToken(completion: @escaping (String?) -> Void) {
+    func getCSRFToken(completion: @escaping (String?) -> Void) {
         guard let url = URL(string: "\(baseURL)/csrf_token") else {
             completion(nil)
             return

@@ -47,10 +47,11 @@ class AddEditUserViewController: UIViewController {
     private var activityIndicator: UIActivityIndicatorView!
     
     // MARK: - Initialization
-    init(authService: AuthenticationService, apiClient: APIClient, managedUser: ManagedUser? = nil) {
+    init(authService: AuthenticationService, apiClient: APIClient, managedUser: ManagedUser? = nil, initialSection: Section = .name) {
         self.authService = authService
         self.apiClient = apiClient
         self.managedUser = managedUser
+        self.currentSection = initialSection
         super.init(nibName: nil, bundle: nil)
         
         // If editing existing user, populate data
@@ -70,7 +71,13 @@ class AddEditUserViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        updateUIForCurrentSection()
+        
+        // If editing existing user, load their profile data
+        if managedUser != nil, let userId = self.userId {
+            loadProfileData(for: userId)
+        } else {
+            updateUIForCurrentSection()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -457,6 +464,71 @@ class AddEditUserViewController: UIViewController {
         addMeasurementsButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         addMeasurementsButton.addTarget(self, action: #selector(addMeasurementsTapped), for: .touchUpInside)
         contentStackView.addArrangedSubview(addMeasurementsButton)
+    }
+    
+    // MARK: - Data Loading
+    private func loadProfileData(for userId: Int) {
+        guard let url = URL(string: "https://www.breathesafe.xyz/users/\(userId)/profile") else {
+            updateUIForCurrentSection()
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Get session cookies
+        if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+            let cookieHeader = HTTPCookie.requestHeaderFields(with: cookies)
+            for (key, value) in cookieHeader {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error loading profile: \(error)")
+                    self.updateUIForCurrentSection()
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200,
+                      let data = data else {
+                    print("Failed to load profile")
+                    self.updateUIForCurrentSection()
+                    return
+                }
+                
+                // Parse the response
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let profile = json["profile"] as? [String: Any] {
+                    print("Loaded profile: \(profile)")
+                    
+                    // Populate profile data
+                    if let id = profile["id"] as? Int {
+                        self.profileId = id
+                    }
+                    if let raceEthnicity = profile["race_ethnicity"] as? String {
+                        self.raceEthnicity = raceEthnicity
+                    }
+                    if let genderAndSex = profile["gender_and_sex"] as? String {
+                        self.genderAndSex = genderAndSex
+                    }
+                    if let otherGender = profile["other_gender"] as? String {
+                        self.otherGender = otherGender
+                    }
+                    if let yearOfBirth = profile["year_of_birth"] as? Int {
+                        self.yearOfBirth = yearOfBirth
+                    }
+                }
+                
+                self.updateUIForCurrentSection()
+            }
+        }.resume()
     }
     
     // MARK: - Helper Methods

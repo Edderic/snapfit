@@ -826,9 +826,19 @@ class LoginViewController: UIViewController {
     private func showActionsForUser(_ user: ManagedUser, sourceView: UIView) {
         let alert = UIAlertController(title: "Actions for \(user.displayName)", message: "Choose an action:", preferredStyle: .actionSheet)
 
+        // Update Name action
+        alert.addAction(UIAlertAction(title: "Update Name", style: .default) { [weak self] _ in
+            self?.openAddEditUser(for: user, section: .name)
+        })
+
+        // Update Demographics action
+        alert.addAction(UIAlertAction(title: "Update Demographics", style: .default) { [weak self] _ in
+            self?.openAddEditUser(for: user, section: .demographics)
+        })
+
         // Add Facial Measurements action
         alert.addAction(UIAlertAction(title: "Add Facial Measurements", style: .default) { [weak self] _ in
-            self?.navigateToFaceMeasurement(for: user)
+            self?.openAddEditUser(for: user, section: .facialMeasurements)
         })
 
         // Add Fit Test action
@@ -849,6 +859,11 @@ class LoginViewController: UIViewController {
             self?.present(safariVC, animated: true)
         })
 
+        // Delete action (destructive style)
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.confirmDeleteUser(user)
+        })
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
 
         // For iPad
@@ -859,18 +874,95 @@ class LoginViewController: UIViewController {
 
         present(alert, animated: true)
     }
-
-    private func navigateToFaceMeasurement(for user: ManagedUser) {
-        let faceMeasurementVC = FaceMeasurementViewController()
-        faceMeasurementVC.selectedUser = user
-        faceMeasurementVC.authService = authService
-        faceMeasurementVC.apiClient = apiClient
-        faceMeasurementVC.offlineSyncManager = offlineSyncManager
-
-        let navigationController = UINavigationController(rootViewController: faceMeasurementVC)
-        navigationController.modalPresentationStyle = .fullScreen
-        present(navigationController, animated: true)
+    
+    private func openAddEditUser(for user: ManagedUser, section: AddEditUserViewController.Section) {
+        let addEditVC = AddEditUserViewController(
+            authService: authService,
+            apiClient: apiClient,
+            managedUser: user,
+            initialSection: section
+        )
+        let navController = UINavigationController(rootViewController: addEditVC)
+        navController.modalPresentationStyle = .fullScreen
+        present(navController, animated: true)
     }
+    
+    private func confirmDeleteUser(_ user: ManagedUser) {
+        let alert = UIAlertController(
+            title: "Delete User",
+            message: "Are you sure you want to delete \(user.displayName)? This action cannot be undone.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.deleteUser(user)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+    
+    private func deleteUser(_ user: ManagedUser) {
+        guard let managedUserId = user.id else {
+            showError("Invalid user ID")
+            return
+        }
+        
+        guard let url = URL(string: "https://www.breathesafe.xyz/managed_users/\(managedUserId)") else {
+            showError("Invalid URL")
+            return
+        }
+        
+        // Get CSRF token first
+        authService.getCSRFToken { [weak self] token in
+            guard let self = self, let token = token else {
+                self?.showError("Failed to get CSRF token")
+                return
+            }
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            request.setValue(token, forHTTPHeaderField: "X-CSRF-Token")
+            
+            // Get session cookies
+            if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+                let cookieHeader = HTTPCookie.requestHeaderFields(with: cookies)
+                for (key, value) in cookieHeader {
+                    request.setValue(value, forHTTPHeaderField: key)
+                }
+            }
+            
+            URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        self.showError("Failed to delete user: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        self.showError("Invalid response")
+                        return
+                    }
+                    
+                    if httpResponse.statusCode == 200 || httpResponse.statusCode == 204 {
+                        // Success - refresh the list
+                        self.showSuccess("Successfully deleted \(user.displayName)")
+                        self.loadManagedUsers()
+                    } else {
+                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                            print("Delete failed with status \(httpResponse.statusCode): \(responseString)")
+                        }
+                        self.showError("Failed to delete user (Status: \(httpResponse.statusCode))")
+                    }
+                }
+            }.resume()
+        }
+    }
+
 
     // MARK: - UI Helper Methods
     private func setLoading(_ loading: Bool, isSignUp: Bool) {
@@ -899,6 +991,12 @@ class LoginViewController: UIViewController {
 
     private func showError(_ message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showSuccess(_ message: String) {
+        let alert = UIAlertController(title: "Success", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
