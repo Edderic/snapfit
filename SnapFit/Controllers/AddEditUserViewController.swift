@@ -360,44 +360,73 @@ class AddEditUserViewController: UIViewController {
                     return
                 }
                 
-                guard let httpResponse = response as? HTTPURLResponse,
-                      httpResponse.statusCode == 200,
-                      let data = data else {
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("No HTTP response")
+                    self.displayNoMeasurements()
+                    return
+                }
+                
+                print("Facial measurements response status: \(httpResponse.statusCode)")
+                
+                guard httpResponse.statusCode == 200, let data = data else {
+                    print("Status code not 200 or no data")
+                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                        print("Response body: \(responseString)")
+                    }
                     self.displayNoMeasurements()
                     return
                 }
                 
                 // Parse the response
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let facialMeasurement = json["facial_measurement"] as? [String: Any],
-                   let arkit = facialMeasurement["arkit"] as? [String: Any] {
-                    self.displayMeasurements(arkit: arkit)
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    print("Facial measurements JSON: \(json)")
+                    
+                    // The endpoint returns "facial_measurements" (plural) as an array
+                    if let facialMeasurements = json["facial_measurements"] as? [[String: Any]],
+                       let firstMeasurement = facialMeasurements.first {
+                        print("First measurement: \(firstMeasurement)")
+                        
+                        // Check if there's an "aggregated" key (from as_json)
+                        if let aggregated = firstMeasurement["aggregated"] as? [String: Any] {
+                            print("Aggregated data: \(aggregated)")
+                            self.displayMeasurements(aggregated: aggregated)
+                        } else {
+                            print("Could not find 'aggregated' key in measurement")
+                            print("Available keys in measurement: \(firstMeasurement.keys)")
+                            self.displayNoMeasurements()
+                        }
+                    } else {
+                        print("Could not parse facial_measurements from JSON")
+                        print("Available keys: \(json.keys)")
+                        self.displayNoMeasurements()
+                    }
                 } else {
+                    print("Could not parse JSON")
                     self.displayNoMeasurements()
                 }
             }
         }.resume()
     }
     
-    private func displayMeasurements(arkit: [String: Any]) {
+    private func displayMeasurements(aggregated: [String: Any]) {
         // Show aggregated measurements table
         let tableLabel = createLabel(text: "Aggregated Measurements")
         tableLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
         contentStackView.addArrangedSubview(tableLabel)
         
-        // Extract aggregated measurements
+        // Extract aggregated measurements (keys have _mm suffix)
         let measurements = [
-            ("Nose", arkit["nose"] as? Double),
-            ("Strap", arkit["strap"] as? Double),
-            ("Top Cheek", arkit["top_cheek"] as? Double),
-            ("Mid Cheek", arkit["mid_cheek"] as? Double),
-            ("Chin", arkit["chin"] as? Double)
+            ("Nose", aggregated["nose_mm"] as? Double),
+            ("Strap", aggregated["strap_mm"] as? Double),
+            ("Top Cheek", aggregated["top_cheek_mm"] as? Double),
+            ("Mid Cheek", aggregated["mid_cheek_mm"] as? Double),
+            ("Chin", aggregated["chin_mm"] as? Double)
         ]
         
         for (name, value) in measurements {
             let valueString: String
             if let val = value, val > 0 {
-                valueString = String(format: "%.1f", val)
+                valueString = String(format: "%.1f mm", val)
             } else {
                 valueString = "Incomplete"
             }

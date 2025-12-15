@@ -668,11 +668,7 @@ class FaceMeasurementViewController: UIViewController {
                 
                 switch result {
                 case .success:
-                    self?.showSuccess("Data saved successfully!")
-                    // Navigate back to AddEditUserViewController after successful save
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        self?.navigateBackToAddEditUser()
-                    }
+                    self?.showSuccessAndNavigateBack("Data saved successfully!")
                 case .failure(let error):
                     // If there's a network error, offer to save offline
                     if case APIError.networkError = error {
@@ -694,11 +690,7 @@ class FaceMeasurementViewController: UIViewController {
         
         alert.addAction(UIAlertAction(title: "Save Locally", style: .default) { [weak self] _ in
             if let fileURL = self?.dataExportManager.saveToLocalFile(measurements) {
-                self?.showSuccess("Data saved locally to: \(fileURL.lastPathComponent)")
-                // Navigate back after local save
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    self?.navigateBackToAddEditUser()
-                }
+                self?.showSuccessAndNavigateBack("Data saved locally to: \(fileURL.lastPathComponent)")
             } else {
                 self?.showError("Failed to save locally")
             }
@@ -710,8 +702,15 @@ class FaceMeasurementViewController: UIViewController {
     }
     
     private func navigateBackToAddEditUser() {
-        // Dismiss this view controller to return to AddEditUserViewController
-        dismiss(animated: true)
+        // Dismiss the navigation controller to return to AddEditUserViewController
+        // Check if we're in a navigation controller
+        if let navController = navigationController {
+            // If we're in a nav controller, dismiss it
+            navController.dismiss(animated: true)
+        } else {
+            // Otherwise, dismiss ourselves
+            dismiss(animated: true)
+        }
     }
 
     // TODO: Uncomment these methods once the new model files are added to the Xcode project
@@ -876,6 +875,15 @@ class FaceMeasurementViewController: UIViewController {
     private func showSuccess(_ message: String) {
         let alert = UIAlertController(title: "Success", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showSuccessAndNavigateBack(_ message: String) {
+        let alert = UIAlertController(title: "Success", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            // Navigate back immediately after user dismisses the alert
+            self?.navigateBackToAddEditUser()
+        })
         present(alert, animated: true)
     }
 }
