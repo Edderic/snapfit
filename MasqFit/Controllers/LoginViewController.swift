@@ -786,7 +786,7 @@ class LoginViewController: UIViewController {
                 case .success(let users):
                     print("Successfully loaded \(users.count) managed users for user ID: \(self?.authService.currentUser?.id ?? -1)")
                     if users.count > 0 {
-                        print("First managed user: \(users[0].displayName) (managed_id: \(users[0].managedId))")
+                        print("First managed user: \(users[0].displayName) (managed_id: \(users[0].managedId ?? -1))")
                     }
                     self?.managedUsers = users
                     self?.updateManagedUsersButton()
