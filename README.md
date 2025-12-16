@@ -1,6 +1,6 @@
-# BreatheSafe iOS - Facial Measurement for Mask Fitting
+# SnapFit - Facial Measurement for Mask Fitting
 
-An iOS application that uses Apple's True Depth camera and ARKit to measure facial features for mask fitting recommendations.
+An iOS application that uses Apple's True Depth camera and ARKit to measure facial features for mask fitting recommendations. Interacts with the [Breathesafe backend](https://github.com/Edderic/breathesafe) to make recommendations
 
 ## Features
 
@@ -53,7 +53,7 @@ struct FacialMeasurementPairs {
         (1, 2),     // Add more pairs as needed
         // ... more pairs
     ]
-    
+
     static let pairDescriptions: [String: String] = [
         "14-818": "Bridge of nose to chin",
         "1-2": "Eye corner to eye corner",
@@ -130,7 +130,7 @@ The app uses `ARFaceTrackingConfiguration` to:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the GNU General Public License v3.0 - see the LICENSE file for details.
 
 ## Support
 
