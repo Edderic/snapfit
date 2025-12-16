@@ -1,6 +1,6 @@
 import UIKit
 
-/// View controller displaying information about SnapFit and mask fitting
+/// View controller displaying information about MasqFit and mask fitting
 class AboutViewController: UIViewController {
 
     // MARK: - UI Elements
@@ -28,7 +28,7 @@ class AboutViewController: UIViewController {
 
     // MARK: - Setup Methods
     private func setupUI() {
-        title = "About SnapFit"
+        title = "About MasqFit"
         // Set background color to #2F80ED
         view.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
         
@@ -154,11 +154,11 @@ Professional fit testing exists—but it can be expensive, time-consuming, and/o
         // Create body content
         let bodyContent = """
 
-How SnapFit Helps
+How MasqFit Helps
 
-SnapFit makes better mask fit accessible.
+MasqFit makes better mask fit accessible.
 
-Using a quick facial scan, SnapFit recommends masks that are most likely to fit your face, based on real fit data and mask performance—not guesswork, decreasing the need for trial-and-error and specialized equipment. It strikes a balance between accuracy and accessibility.
+Using a quick facial scan, MasqFit recommends masks that are most likely to fit your face, based on real fit data and mask performance—not guesswork, decreasing the need for trial-and-error and specialized equipment. It strikes a balance between accuracy and accessibility.
 
 Better fit means better protection—for you and the people around you.
 """
@@ -311,7 +311,7 @@ Better fit means better protection—for you and the people around you.
         bodyAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: bodyAttributedString.length))
 
         // Format body headlines
-        let bodyHeadlines = ["Why Fit Matters", "Fit Is Personal", "How SnapFit Helps"]
+        let bodyHeadlines = ["Why Fit Matters", "Fit Is Personal", "How MasqFit Helps"]
         for headline in bodyHeadlines {
             let range = (bodyContent as NSString).range(of: headline)
             if range.location != NSNotFound {

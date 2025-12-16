@@ -90,7 +90,7 @@ class LoginViewController: UIViewController {
 
     // MARK: - Setup Methods
     private func setupUI() {
-        title = "SnapFit"
+        title = "MasqFit"
         // Set background color using hex #2F80ED
         view.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
         

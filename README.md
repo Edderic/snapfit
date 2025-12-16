@@ -1,4 +1,4 @@
-# SnapFit - Facial Measurement for Mask Fitting
+# MasqFit - Facial Measurement for Mask Fitting
 
 An iOS application that uses Apple's True Depth camera and ARKit to measure facial features for mask fitting recommendations. Interacts with the [Breathesafe backend](https://github.com/Edderic/breathesafe) to make recommendations
 
