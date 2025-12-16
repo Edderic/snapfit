@@ -28,6 +28,15 @@ class ManagedUserTableViewCell: UITableViewCell {
         return label
     }()
     
+    private let masksLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textAlignment = .center
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private let actionsButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -53,6 +62,7 @@ class ManagedUserTableViewCell: UITableViewCell {
         contentView.addSubview(nameLabel)
         contentView.addSubview(demogLabel)
         contentView.addSubview(facialLabel)
+        contentView.addSubview(masksLabel)
         contentView.addSubview(actionsButton)
         
         // Create gear icon
@@ -61,23 +71,28 @@ class ManagedUserTableViewCell: UITableViewCell {
         actionsButton.addTarget(self, action: #selector(actionsButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            // Name label - 30% width
+            // Name label - 25% width
             nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             nameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            nameLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.3),
+            nameLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.25),
             
-            // Demog label - 20% width
+            // Demog label - 15% width
             demogLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
             demogLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            demogLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.2),
+            demogLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.15),
             
-            // Facial label - 20% width
+            // Facial label - 15% width
             facialLabel.leadingAnchor.constraint(equalTo: demogLabel.trailingAnchor, constant: 8),
             facialLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            facialLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.2),
+            facialLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.15),
+            
+            // Masks label - 15% width
+            masksLabel.leadingAnchor.constraint(equalTo: facialLabel.trailingAnchor, constant: 8),
+            masksLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            masksLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.15),
             
             // Actions button - remaining space
-            actionsButton.leadingAnchor.constraint(equalTo: facialLabel.trailingAnchor, constant: 8),
+            actionsButton.leadingAnchor.constraint(equalTo: masksLabel.trailingAnchor, constant: 8),
             actionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
             actionsButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             actionsButton.widthAnchor.constraint(equalToConstant: 30),
@@ -160,6 +175,13 @@ class ManagedUserTableViewCell: UITableViewCell {
         } else {
             facialLabel.text = "✗"
             facialLabel.textColor = .red
+        }
+        
+        // Configure masks tested count
+        if let maskCount = user.numUniqueMasksTested {
+            masksLabel.text = "\(maskCount)"
+        } else {
+            masksLabel.text = "0"
         }
     }
 }

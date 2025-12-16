@@ -590,6 +590,19 @@ class LoginViewController: UIViewController {
         let message = """
         This page is meant for people who are trying to contribute data to Breathesafe for research.
         
+        Add button:
+        Click on this button to create a new Respirator user. You will be asked for name, demographics, and facial measurement information.
+        
+        Table columns:
+        
+        Name: The first and last name of the Respirator user.
+        
+        Demog: Demographics completion percentage (race/ethnicity, gender, year of birth).
+        
+        Facial: Checkmark if facial measurements are complete, X if incomplete.
+        
+        Masks: Number of unique masks that have been fit tested for this user.
+        
         Actions button:
         
         The "Actions" button lists options, such as modifying existing demographic data and facial measurements, and adding a fit test for a particular user.
@@ -856,6 +869,26 @@ class LoginViewController: UIViewController {
             safariVC.preferredControlTintColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
             self?.present(safariVC, animated: true)
         })
+
+        // View Fit Tests action (only show if user has at least one fit test)
+        if let maskCount = user.numUniqueMasksTested, maskCount > 0 {
+            alert.addAction(UIAlertAction(title: "View Fit Tests", style: .default) { [weak self] _ in
+                guard let managedId = user.managedId else {
+                    self?.showError("Invalid user ID")
+                    return
+                }
+                
+                let urlString = "https://www.breathesafe.xyz/#/fit_tests?managedId=\(managedId)"
+                guard let url = URL(string: urlString) else {
+                    self?.showError("Invalid URL")
+                    return
+                }
+                
+                let safariVC = SFSafariViewController(url: url)
+                safariVC.preferredControlTintColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+                self?.present(safariVC, animated: true)
+            })
+        }
 
         // Delete action (destructive style)
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
@@ -1259,6 +1292,13 @@ extension LoginViewController: UITableViewDelegate, UITableViewDataSource {
         facialLabel.textAlignment = .center
         facialLabel.translatesAutoresizingMaskIntoConstraints = false
         
+        let masksLabel = UILabel()
+        masksLabel.text = "Masks"
+        masksLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        masksLabel.textColor = .white
+        masksLabel.textAlignment = .center
+        masksLabel.translatesAutoresizingMaskIntoConstraints = false
+        
         let actionsLabel = UILabel()
         actionsLabel.text = "Actions"
         actionsLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
@@ -1269,22 +1309,27 @@ extension LoginViewController: UITableViewDelegate, UITableViewDataSource {
         headerView.addSubview(nameLabel)
         headerView.addSubview(demogLabel)
         headerView.addSubview(facialLabel)
+        headerView.addSubview(masksLabel)
         headerView.addSubview(actionsLabel)
         
         NSLayoutConstraint.activate([
             nameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 12),
             nameLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            nameLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.3),
+            nameLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.25),
             
             demogLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
             demogLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            demogLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.2),
+            demogLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.15),
             
             facialLabel.leadingAnchor.constraint(equalTo: demogLabel.trailingAnchor, constant: 8),
             facialLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            facialLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.2),
+            facialLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.15),
             
-            actionsLabel.leadingAnchor.constraint(equalTo: facialLabel.trailingAnchor, constant: 8),
+            masksLabel.leadingAnchor.constraint(equalTo: facialLabel.trailingAnchor, constant: 8),
+            masksLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            masksLabel.widthAnchor.constraint(equalTo: headerView.widthAnchor, multiplier: 0.15),
+            
+            actionsLabel.leadingAnchor.constraint(equalTo: masksLabel.trailingAnchor, constant: 8),
             actionsLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -12),
             actionsLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
         ])

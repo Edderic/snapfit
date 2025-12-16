@@ -706,7 +706,8 @@ class AddEditUserViewController: UIViewController {
             lastName: lastName,
             email: nil,
             fmPercentComplete: nil,
-            demogPercentComplete: nil
+            demogPercentComplete: nil,
+            numUniqueMasksTested: nil
         )
         
         faceMeasurementVC.selectedUser = tempUser
