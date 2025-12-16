@@ -87,7 +87,7 @@ Air isn't just empty space — it's full of tiny particles called aerosols that 
         let middleContent = """
 The air you breathe matters more than many people realize:
 
-• People inhale many thousands of liters of air every day, far more than the amount of water we usually drink, making healthy air exposure critical. (https://en.wikipedia.org/wiki/Tidal_volume)
+• People inhale many thousands of liters of air every day, far more than the amount of water we usually drink, making healthy air exposure critical.
 """
 
         // Create middle2 text view (content between second and third image)
@@ -280,13 +280,14 @@ Better fit means better protection—for you and the people around you.
         middleAttributedString.addAttribute(.font, value: defaultFont, range: NSRange(location: 0, length: middleAttributedString.length))
         middleAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: NSRange(location: 0, length: middleAttributedString.length))
 
-        // Add tidal volume link in middle content
-        let tidalVolumeLink = "https://en.wikipedia.org/wiki/Tidal_volume"
-        let tidalVolumeRange = (middleContent as NSString).range(of: tidalVolumeLink)
-        if tidalVolumeRange.location != NSNotFound {
-            middleAttributedString.addAttribute(.link, value: tidalVolumeLink, range: tidalVolumeRange)
-            middleAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: tidalVolumeRange)
-            middleAttributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: tidalVolumeRange)
+        // Add link to "People inhale many thousands of liters of air every day"
+        let inhaleSentence = "People inhale many thousands of liters of air every day"
+        let inhaleLink = "https://www.lung.org/blog/how-your-lungs-work"
+        let inhaleRange = (middleContent as NSString).range(of: inhaleSentence)
+        if inhaleRange.location != NSNotFound {
+            middleAttributedString.addAttribute(.link, value: inhaleLink, range: inhaleRange)
+            middleAttributedString.addAttribute(.foregroundColor, value: UIColor.white, range: inhaleRange)
+            middleAttributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: inhaleRange)
         }
 
         // Format middle2 content
