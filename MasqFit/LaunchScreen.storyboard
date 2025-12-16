@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" initialViewController="01J-lp-oVM">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
-        <capability name="System colors in document" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -16,29 +16,54 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreenImage" translatesAutoresizingMaskIntoConstraints="NO" id="img-launch-screen">
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchBackground" translatesAutoresizingMaskIntoConstraints="NO" id="BG1-bg-1mG">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchMark" translatesAutoresizingMaskIntoConstraints="NO" id="MRK-3m-7x8">
+                                <rect key="frame" x="96.5" y="253.0" width="200" height="200"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="200" id="W-mark-200"/>
+                                    <constraint firstAttribute="height" constant="200" id="H-mark-200"/>
+                                </constraints>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="MasqFit" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignCenters" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TTL-9p-q1B">
+                                <rect key="frame" x="20" y="469.0" width="353" height="66"/>
+                                <fontDescription key="fontDescription" type="system" weight="bold" pointSize="56"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Find masks most likely to&#10;fit your face, in a snap." textAlignment="center" numberOfLines="0" lineBreakMode="wordWrap" baselineAdjustment="alignCenters" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TAG-5c-2pZ">
+                                <rect key="frame" x="40" y="553.0" width="313" height="88"/>
+                                <fontDescription key="fontDescription" type="system" weight="regular" pointSize="28"/>
+                                <color key="textColor" white="1" alpha="0.92" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="img-launch-screen" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="img-leading"/>
-                            <constraint firstItem="img-launch-screen" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="img-trailing"/>
-                            <constraint firstItem="img-launch-screen" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="img-top"/>
-                            <constraint firstItem="img-launch-screen" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="img-bottom"/>
+                            <constraint firstItem="BG1-bg-1mG" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="BG-top"/>
+                            <constraint firstItem="BG1-bg-1mG" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="BG-bottom"/>
+                            <constraint firstItem="BG1-bg-1mG" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="BG-leading"/>
+                            <constraint firstItem="BG1-bg-1mG" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="BG-trailing"/>
+
+                            <constraint firstItem="MRK-3m-7x8" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="MRK-centerX"/>
+                            <constraint firstItem="MRK-3m-7x8" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-90" id="MRK-centerY"/>
+
+                            <constraint firstItem="TTL-9p-q1B" firstAttribute="top" secondItem="MRK-3m-7x8" secondAttribute="bottom" constant="16" id="TTL-top"/>
+                            <constraint firstItem="TTL-9p-q1B" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="20" id="TTL-leading"/>
+                            <constraint firstItem="TTL-9p-q1B" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-20" id="TTL-trailing"/>
+
+                            <constraint firstItem="TAG-5c-2pZ" firstAttribute="top" secondItem="TTL-9p-q1B" secondAttribute="bottom" constant="10" id="TAG-top"/>
+                            <constraint firstItem="TAG-5c-2pZ" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="40" id="TAG-leading"/>
+                            <constraint firstItem="TAG-5c-2pZ" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-40" id="TAG-trailing"/>
                         </constraints>
                     </view>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-4l-o9G" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="53" y="375"/>
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchScreenImage"/>
-        <systemColor name="systemBackgroundColor">
-            <color red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </systemColor>
+        <image name="LaunchBackground" width="1242" height="2688"/>
+        <image name="LaunchMark" width="512" height="512"/>
     </resources>
 </document>
