@@ -1186,7 +1186,7 @@ extension LoginViewController: AuthenticationServiceDelegate {
 extension LoginViewController: APIClientDelegate {
     func apiClient(_ client: APIClient, didExportMeasurementsFor user: ManagedUser) {
         // Handle successful export
-        print("Successfully exported measurements for user: \(user.managedId)")
+        print("Successfully exported measurements for user: \(user.managedId ?? -1)")
     }
 
     func apiClient(_ client: APIClient, didEncounterError error: APIError) {

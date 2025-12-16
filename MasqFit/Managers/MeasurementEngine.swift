@@ -35,23 +35,18 @@ class MeasurementEngine {
     
     /// Process facial landmarks and calculate measurements
     func processLandmarks(_ landmarks: FacialLandmarks) {
-        do {
-            let measurements = landmarks.distances(between: customMeasurementPairs)
-            
-            // Extract unique landmark indices from measurement pairs
-            let uniqueIndices = Set(customMeasurementPairs.flatMap { [$0.0, $0.1] })
-            let coordinates = landmarks.exportCoordinates(for: Array(uniqueIndices))
-            
-            // Add to history
-            addToHistory(measurements)
-            addCoordinatesToHistory(coordinates)
-            
-            // Notify delegate
-            delegate?.measurementEngine(self, didUpdateMeasurements: measurements)
-            
-        } catch {
-            delegate?.measurementEngine(self, didEncounterError: error)
-        }
+        let measurements = landmarks.distances(between: customMeasurementPairs)
+        
+        // Extract unique landmark indices from measurement pairs
+        let uniqueIndices = Set(customMeasurementPairs.flatMap { [$0.0, $0.1] })
+        let coordinates = landmarks.exportCoordinates(for: Array(uniqueIndices))
+        
+        // Add to history
+        addToHistory(measurements)
+        addCoordinatesToHistory(coordinates)
+        
+        // Notify delegate
+        delegate?.measurementEngine(self, didUpdateMeasurements: measurements)
     }
     
     /// Add measurements to history
