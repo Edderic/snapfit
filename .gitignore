@@ -11,3 +11,5 @@ Carthage/
 *.lock
 .env
 .env.*
+*.xcworkspace
+xcshareddata/
