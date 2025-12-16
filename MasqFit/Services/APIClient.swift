@@ -58,7 +58,7 @@ class APIClient {
             request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
         }
         
-        urlSession.dataTask(with: request) { [weak self] data, response, error in
+        urlSession.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
                     completion(.failure(.networkError(error)))
@@ -108,7 +108,7 @@ class APIClient {
             request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
         }
         
-        urlSession.dataTask(with: request) { [weak self] data, response, error in
+        urlSession.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
                     completion(.failure(.networkError(error)))
@@ -165,7 +165,7 @@ class APIClient {
             request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
         }
         
-        urlSession.dataTask(with: request) { [weak self] data, response, error in
+        urlSession.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
                     completion(.failure(.networkError(error)))
