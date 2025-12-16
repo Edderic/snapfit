@@ -418,6 +418,9 @@ class AddEditUserViewController: UIViewController {
     }
     
     private func displayMeasurements(aggregated: [String: Any]) {
+        // Clear existing content to prevent duplicates
+        contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
         // Show aggregated measurements table
         let tableLabel = createLabel(text: "Aggregated Measurements")
         tableLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
@@ -448,6 +451,9 @@ class AddEditUserViewController: UIViewController {
     }
     
     private func displayNoMeasurements() {
+        // Clear existing content to prevent duplicates
+        contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
         let noDataLabel = createLabel(text: "No facial measurements yet.")
         contentStackView.addArrangedSubview(noDataLabel)
         
