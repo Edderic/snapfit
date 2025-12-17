@@ -828,6 +828,9 @@ class LoginViewController: UIViewController {
         // Show logout button
         logoutButton.isHidden = false
         
+        // Update navigation bar to show + and ? buttons
+        updateNavigationBarForRespiratoryUsers()
+        
         // Update managed users button visibility based on current state
         updateManagedUsersButton()
         
