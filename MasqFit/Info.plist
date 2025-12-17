@@ -4,6 +4,10 @@
 <dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>MasqFit uses the camera to measure your facial dimensions for mask fitting recommendations.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>MasqFit uses face tracking to accurately measure facial landmarks for mask fitting.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
