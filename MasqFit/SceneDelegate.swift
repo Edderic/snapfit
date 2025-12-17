@@ -13,9 +13,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         window = UIWindow(windowScene: windowScene)
 
+        // Configure navigation bar appearance globally
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().tintColor = .white
+
         // Create the main view controller programmatically
-        // TODO: Replace with LoginViewController once it's added to the project
-        // let faceMeasurementVC = FaceMeasurementViewController()
         let loginVC = LoginViewController()
         let navigationController = UINavigationController(rootViewController: loginVC)
 
