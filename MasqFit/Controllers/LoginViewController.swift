@@ -1258,6 +1258,11 @@ class LoginViewController: UIViewController {
     private func showMainMenu() {
         isShowingLoginForm = false
         
+        // Reset navigation bar to default state
+        title = "MasqFit"
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.rightBarButtonItems = nil
+        
         // Show background image again
         backgroundImageView.isHidden = false
         
@@ -1282,9 +1287,6 @@ class LoginViewController: UIViewController {
         refreshManagedUsersButton.isHidden = true
         logoutButton.isHidden = true
         deleteAccountButton.isHidden = true
-        
-        // Remove back button from navigation bar
-        navigationItem.leftBarButtonItem = nil
         
         // Clear fields
         emailTextField.text = ""
