@@ -24,8 +24,9 @@ class LoginViewController: UIViewController {
     private var emptyManagedUsersTextView: UITextView!
     private var refreshManagedUsersButton: UIButton!
     private var refreshActivityIndicator: UIActivityIndicatorView!
-    private var logoutButton: UIButton!
-    private var deleteAccountButton: UIButton!
+    private var addHelpButtonsContainer: UIView!
+    private var addUserButtonBelow: UIButton!
+    private var helpButtonBelow: UIButton!
 
     // MARK: - Properties
     private let authService = AuthenticationService()
@@ -71,6 +72,9 @@ class LoginViewController: UIViewController {
             updateNavigationBarForRespiratoryUsers()
             // Refresh managed users when returning to this view
             loadManagedUsers()
+        } else if isShowingLoginForm && !authService.isAuthenticated {
+            // User was logged out (e.g., from account deletion)
+            showMainMenu()
         }
     }
     
@@ -78,15 +82,43 @@ class LoginViewController: UIViewController {
         // Change title to "Respirator Users"
         title = "Respirator Users"
         
-        // Add + button
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addUserButtonTapped))
-        addButton.tintColor = .white
+        // Add hamburger menu button
+        let hamburgerButton = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal"), style: .plain, target: self, action: #selector(hamburgerMenuTapped))
+        hamburgerButton.tintColor = .white
         
-        // Add ? button
-        let helpButton = UIBarButtonItem(image: UIImage(systemName: "questionmark.circle"), style: .plain, target: self, action: #selector(helpButtonTapped))
-        helpButton.tintColor = .white
+        navigationItem.rightBarButtonItems = [hamburgerButton]
+    }
+    
+    @objc private func hamburgerMenuTapped() {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        navigationItem.rightBarButtonItems = [helpButton, addButton]
+        // Get current user email
+        let email = authService.currentUserEmail ?? "Unknown"
+        
+        // Account option
+        alert.addAction(UIAlertAction(title: "Account: \(email)", style: .default) { [weak self] _ in
+            self?.showAccountViewController()
+        })
+        
+        // Logout option
+        alert.addAction(UIAlertAction(title: "Logout", style: .default) { [weak self] _ in
+            self?.logoutButtonTapped()
+        })
+        
+        // Cancel option
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // For iPad support
+        if let popoverController = alert.popoverPresentationController {
+            popoverController.barButtonItem = navigationItem.rightBarButtonItems?.first
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func showAccountViewController() {
+        let accountVC = AccountViewController(authService: authService)
+        navigationController?.pushViewController(accountVC, animated: true)
     }
 
     // MARK: - Setup Methods
@@ -338,29 +370,33 @@ class LoginViewController: UIViewController {
         refreshActivityIndicator.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(refreshActivityIndicator)
 
-        // Create logout button
-        logoutButton = UIButton(type: .system)
-        logoutButton.setTitle("Logout", for: .normal)
-        logoutButton.backgroundColor = UIColor.systemRed
-        logoutButton.setTitleColor(UIColor.white, for: .normal)
-        logoutButton.layer.cornerRadius = 8
-        logoutButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        logoutButton.isHidden = true
-        logoutButton.translatesAutoresizingMaskIntoConstraints = false
-        logoutButton.addTarget(self, action: #selector(logoutButtonTapped), for: .touchUpInside)
-        contentView.addSubview(logoutButton)
+        // Create container for + and Help buttons below title
+        addHelpButtonsContainer = UIView()
+        addHelpButtonsContainer.translatesAutoresizingMaskIntoConstraints = false
+        addHelpButtonsContainer.isHidden = true
+        contentView.addSubview(addHelpButtonsContainer)
         
-        // Create delete account button
-        deleteAccountButton = UIButton(type: .system)
-        deleteAccountButton.setTitle("Delete Account", for: .normal)
-        deleteAccountButton.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)
-        deleteAccountButton.setTitleColor(.white, for: .normal)
-        deleteAccountButton.layer.cornerRadius = 8
-        deleteAccountButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        deleteAccountButton.isHidden = true
-        deleteAccountButton.translatesAutoresizingMaskIntoConstraints = false
-        deleteAccountButton.addTarget(self, action: #selector(deleteAccountButtonTapped), for: .touchUpInside)
-        contentView.addSubview(deleteAccountButton)
+        // Create + button (below title)
+        addUserButtonBelow = UIButton(type: .system)
+        addUserButtonBelow.setTitle("+ Add Respirator User", for: .normal)
+        addUserButtonBelow.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        addUserButtonBelow.setTitleColor(.white, for: .normal)
+        addUserButtonBelow.layer.cornerRadius = 8
+        addUserButtonBelow.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        addUserButtonBelow.translatesAutoresizingMaskIntoConstraints = false
+        addUserButtonBelow.addTarget(self, action: #selector(addUserButtonTapped), for: .touchUpInside)
+        addHelpButtonsContainer.addSubview(addUserButtonBelow)
+        
+        // Create Help button (below title)
+        helpButtonBelow = UIButton(type: .system)
+        helpButtonBelow.setTitle("? Help", for: .normal)
+        helpButtonBelow.backgroundColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        helpButtonBelow.setTitleColor(.white, for: .normal)
+        helpButtonBelow.layer.cornerRadius = 8
+        helpButtonBelow.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        helpButtonBelow.translatesAutoresizingMaskIntoConstraints = false
+        helpButtonBelow.addTarget(self, action: #selector(helpButtonTapped), for: .touchUpInside)
+        addHelpButtonsContainer.addSubview(helpButtonBelow)
 
         // Hide login form initially
         emailTextField.isHidden = true
@@ -467,7 +503,7 @@ class LoginViewController: UIViewController {
             errorLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
 
             // Managed users table view (shown when there are managed users or when empty)
-            managedUsersTableView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            managedUsersTableView.topAnchor.constraint(equalTo: addHelpButtonsContainer.bottomAnchor, constant: 16),
             managedUsersTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             managedUsersTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             managedUsersTableView.bottomAnchor.constraint(equalTo: refreshManagedUsersButton.topAnchor, constant: -16),
@@ -481,23 +517,29 @@ class LoginViewController: UIViewController {
             refreshManagedUsersButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             refreshManagedUsersButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             refreshManagedUsersButton.heightAnchor.constraint(equalToConstant: 50),
-            refreshManagedUsersButton.bottomAnchor.constraint(equalTo: logoutButton.topAnchor, constant: -16),
+            refreshManagedUsersButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
 
             // Refresh activity indicator
             refreshActivityIndicator.centerXAnchor.constraint(equalTo: refreshManagedUsersButton.centerXAnchor),
             refreshActivityIndicator.centerYAnchor.constraint(equalTo: refreshManagedUsersButton.centerYAnchor),
 
-            // Logout button
-            logoutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            logoutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            logoutButton.heightAnchor.constraint(equalToConstant: 50),
-            logoutButton.bottomAnchor.constraint(equalTo: deleteAccountButton.topAnchor, constant: -16),
+            // Add/Help buttons container (below title when authenticated)
+            addHelpButtonsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            addHelpButtonsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            addHelpButtonsContainer.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            addHelpButtonsContainer.heightAnchor.constraint(equalToConstant: 44),
             
-            // Delete account button
-            deleteAccountButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            deleteAccountButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            deleteAccountButton.heightAnchor.constraint(equalToConstant: 50),
-            deleteAccountButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            // Add user button (below title)
+            addUserButtonBelow.leadingAnchor.constraint(equalTo: addHelpButtonsContainer.leadingAnchor),
+            addUserButtonBelow.topAnchor.constraint(equalTo: addHelpButtonsContainer.topAnchor),
+            addUserButtonBelow.bottomAnchor.constraint(equalTo: addHelpButtonsContainer.bottomAnchor),
+            addUserButtonBelow.trailingAnchor.constraint(equalTo: addHelpButtonsContainer.centerXAnchor, constant: -8),
+            
+            // Help button (below title)
+            helpButtonBelow.leadingAnchor.constraint(equalTo: addHelpButtonsContainer.centerXAnchor, constant: 8),
+            helpButtonBelow.topAnchor.constraint(equalTo: addHelpButtonsContainer.topAnchor),
+            helpButtonBelow.bottomAnchor.constraint(equalTo: addHelpButtonsContainer.bottomAnchor),
+            helpButtonBelow.trailingAnchor.constraint(equalTo: addHelpButtonsContainer.trailingAnchor)
         ])
     }
 
@@ -686,126 +728,6 @@ class LoginViewController: UIViewController {
         }
     }
     
-    @objc private func deleteAccountButtonTapped() {
-        let alert = UIAlertController(
-            title: "Delete Account",
-            message: """
-            Are you sure you want to delete your account? This will permanently delete:
-            
-            • Your profile and demographic information
-            • All facial measurements
-            • All fit test data
-            • All managed users
-            
-            This action cannot be undone.
-            """,
-            preferredStyle: .alert
-        )
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Continue", style: .destructive) { [weak self] _ in
-            self?.showDeleteConfirmationInput()
-        })
-        
-        present(alert, animated: true)
-    }
-    
-    private func showDeleteConfirmationInput() {
-        let alert = UIAlertController(
-            title: "Confirm Deletion",
-            message: "Type DELETE to confirm account deletion:",
-            preferredStyle: .alert
-        )
-        
-        alert.addTextField { textField in
-            textField.placeholder = "DELETE"
-            textField.autocapitalizationType = .allCharacters
-        }
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Delete Account", style: .destructive) { [weak self] _ in
-            guard let textField = alert.textFields?.first,
-                  let text = textField.text,
-                  text == "DELETE" else {
-                self?.showError("You must type DELETE to confirm")
-                return
-            }
-            
-            self?.deleteAccount()
-        })
-        
-        present(alert, animated: true)
-    }
-    
-    private func deleteAccount() {
-        guard let url = URL(string: "https://www.breathesafe.xyz/users/account") else {
-            showError("Invalid URL")
-            return
-        }
-        
-        // Get CSRF token first
-        authService.getCSRFToken { [weak self] token in
-            guard let self = self, let token = token else {
-                self?.showError("Failed to get CSRF token")
-                return
-            }
-            
-            var request = URLRequest(url: url)
-            request.httpMethod = "DELETE"
-            request.setValue("application/json", forHTTPHeaderField: "Accept")
-            request.setValue(token, forHTTPHeaderField: "X-CSRF-Token")
-            
-            // Get session cookies
-            if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
-                let cookieHeader = HTTPCookie.requestHeaderFields(with: cookies)
-                for (key, value) in cookieHeader {
-                    request.setValue(value, forHTTPHeaderField: key)
-                }
-            }
-            
-            URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    
-                    if let error = error {
-                        self.showError("Failed to delete account: \(error.localizedDescription)")
-                        return
-                    }
-                    
-                    guard let httpResponse = response as? HTTPURLResponse else {
-                        self.showError("Invalid response")
-                        return
-                    }
-                    
-                    if httpResponse.statusCode == 200 {
-                        // Success - show message and log out
-                        self.showAccountDeletedMessage()
-                    } else {
-                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
-                            print("Delete failed with status \(httpResponse.statusCode): \(responseString)")
-                        }
-                        self.showError("Failed to delete account (Status: \(httpResponse.statusCode))")
-                    }
-                }
-            }.resume()
-        }
-    }
-    
-    private func showAccountDeletedMessage() {
-        let alert = UIAlertController(
-            title: "Account Deleted",
-            message: "Your account has been successfully deleted. All your data has been removed.",
-            preferredStyle: .alert
-        )
-        
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-            // Log out and return to main menu
-            self?.authService.logout { _ in }
-            self?.showMainMenu()
-        })
-        
-        present(alert, animated: true)
-    }
 
     // MARK: - Authentication Methods
     private func login(email: String, password: String) {
@@ -965,11 +887,10 @@ class LoginViewController: UIViewController {
         signUpButton.isHidden = true
         errorLabel.isHidden = true
         
-        // Show logout and delete account buttons
-        logoutButton.isHidden = false
-        deleteAccountButton.isHidden = false
+        // Show add/help buttons container
+        addHelpButtonsContainer.isHidden = false
         
-        // Update navigation bar to show + and ? buttons
+        // Update navigation bar to show hamburger menu
         updateNavigationBarForRespiratoryUsers()
         
         // Update managed users button visibility based on current state
@@ -1222,8 +1143,7 @@ class LoginViewController: UIViewController {
             managedUsersTableView.isHidden = true
             emptyManagedUsersTextView.isHidden = true
             refreshManagedUsersButton.isHidden = true
-            logoutButton.isHidden = true
-            deleteAccountButton.isHidden = true
+            addHelpButtonsContainer.isHidden = true
             
             // Show login form
             emailTextField.isHidden = false
@@ -1285,8 +1205,7 @@ class LoginViewController: UIViewController {
         managedUsersTableView.isHidden = true
         emptyManagedUsersTextView.isHidden = true
         refreshManagedUsersButton.isHidden = true
-        logoutButton.isHidden = true
-        deleteAccountButton.isHidden = true
+        addHelpButtonsContainer.isHidden = true
         
         // Clear fields
         emailTextField.text = ""

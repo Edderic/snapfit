@@ -19,6 +19,11 @@ class AuthenticationService {
     /// Current authenticated user
     private(set) var currentUser: User?
     
+    /// Current user's email
+    var currentUserEmail: String? {
+        return currentUser?.email
+    }
+    
     /// Current session token (if using token-based auth)
     private(set) var sessionToken: String?
     

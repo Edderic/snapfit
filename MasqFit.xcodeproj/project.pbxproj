@@ -26,6 +26,7 @@
 		DA8F03662EEC73F400D87464 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DA55554C2E823EC800757129 /* LaunchScreen.storyboard */; };
 		DA8F03682EEFC7EE00D87464 /* ManagedUserTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8F03672EEFC7EE00D87464 /* ManagedUserTableViewCell.swift */; };
 		DA8F036A2EF05BB100D87464 /* AddEditUserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8F03692EF05BB100D87464 /* AddEditUserViewController.swift */; };
+		DAB35A0B2EF7ADDA00591682 /* AccountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB35A0A2EF7ADDA00591682 /* AccountViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		DA55554E2E823ED800757129 /* ImageViewerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerViewController.swift; sourceTree = "<group>"; };
 		DA8F03672EEFC7EE00D87464 /* ManagedUserTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedUserTableViewCell.swift; sourceTree = "<group>"; };
 		DA8F03692EF05BB100D87464 /* AddEditUserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditUserViewController.swift; sourceTree = "<group>"; };
+		DAB35A0A2EF7ADDA00591682 /* AccountViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 		A1234567890123456789016A /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				DAB35A0A2EF7ADDA00591682 /* AccountViewController.swift */,
 				DA8F03692EF05BB100D87464 /* AddEditUserViewController.swift */,
 				DA5555482E823EA800757129 /* LoginViewController.swift */,
 				DA55554B2E823EB800757129 /* AboutViewController.swift */,
@@ -224,6 +227,7 @@
 				A1234567890123456789013A /* MeasurementEngine.swift in Sources */,
 				A1234567890123456789013C /* FacialLandmarks.swift in Sources */,
 				DA8F036A2EF05BB100D87464 /* AddEditUserViewController.swift in Sources */,
+				DAB35A0B2EF7ADDA00591682 /* AccountViewController.swift in Sources */,
 				A1234567890123456789013E /* DataExportManager.swift in Sources */,
 				A1234567890123456789012A /* AppDelegate.swift in Sources */,
 				A1234567890123456789012C /* SceneDelegate.swift in Sources */,
