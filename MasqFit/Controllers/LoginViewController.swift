@@ -25,6 +25,7 @@ class LoginViewController: UIViewController {
     private var refreshManagedUsersButton: UIButton!
     private var refreshActivityIndicator: UIActivityIndicatorView!
     private var logoutButton: UIButton!
+    private var deleteAccountButton: UIButton!
 
     // MARK: - Properties
     private let authService = AuthenticationService()
@@ -348,6 +349,18 @@ class LoginViewController: UIViewController {
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
         logoutButton.addTarget(self, action: #selector(logoutButtonTapped), for: .touchUpInside)
         contentView.addSubview(logoutButton)
+        
+        // Create delete account button
+        deleteAccountButton = UIButton(type: .system)
+        deleteAccountButton.setTitle("Delete Account", for: .normal)
+        deleteAccountButton.backgroundColor = UIColor.systemRed.withAlphaComponent(0.8)
+        deleteAccountButton.setTitleColor(.white, for: .normal)
+        deleteAccountButton.layer.cornerRadius = 8
+        deleteAccountButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        deleteAccountButton.isHidden = true
+        deleteAccountButton.translatesAutoresizingMaskIntoConstraints = false
+        deleteAccountButton.addTarget(self, action: #selector(deleteAccountButtonTapped), for: .touchUpInside)
+        contentView.addSubview(deleteAccountButton)
 
         // Hide login form initially
         emailTextField.isHidden = true
@@ -478,7 +491,13 @@ class LoginViewController: UIViewController {
             logoutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             logoutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             logoutButton.heightAnchor.constraint(equalToConstant: 50),
-            logoutButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            logoutButton.bottomAnchor.constraint(equalTo: deleteAccountButton.topAnchor, constant: -16),
+            
+            // Delete account button
+            deleteAccountButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            deleteAccountButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            deleteAccountButton.heightAnchor.constraint(equalToConstant: 50),
+            deleteAccountButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
     }
 
@@ -666,6 +685,127 @@ class LoginViewController: UIViewController {
             }
         }
     }
+    
+    @objc private func deleteAccountButtonTapped() {
+        let alert = UIAlertController(
+            title: "Delete Account",
+            message: """
+            Are you sure you want to delete your account? This will permanently delete:
+            
+            • Your profile and demographic information
+            • All facial measurements
+            • All fit test data
+            • All managed users
+            
+            This action cannot be undone.
+            """,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Continue", style: .destructive) { [weak self] _ in
+            self?.showDeleteConfirmationInput()
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func showDeleteConfirmationInput() {
+        let alert = UIAlertController(
+            title: "Confirm Deletion",
+            message: "Type DELETE to confirm account deletion:",
+            preferredStyle: .alert
+        )
+        
+        alert.addTextField { textField in
+            textField.placeholder = "DELETE"
+            textField.autocapitalizationType = .allCharacters
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete Account", style: .destructive) { [weak self] _ in
+            guard let textField = alert.textFields?.first,
+                  let text = textField.text,
+                  text == "DELETE" else {
+                self?.showError("You must type DELETE to confirm")
+                return
+            }
+            
+            self?.deleteAccount()
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func deleteAccount() {
+        guard let url = URL(string: "https://www.breathesafe.xyz/users/account") else {
+            showError("Invalid URL")
+            return
+        }
+        
+        // Get CSRF token first
+        authService.getCSRFToken { [weak self] token in
+            guard let self = self, let token = token else {
+                self?.showError("Failed to get CSRF token")
+                return
+            }
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            request.setValue(token, forHTTPHeaderField: "X-CSRF-Token")
+            
+            // Get session cookies
+            if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+                let cookieHeader = HTTPCookie.requestHeaderFields(with: cookies)
+                for (key, value) in cookieHeader {
+                    request.setValue(value, forHTTPHeaderField: key)
+                }
+            }
+            
+            URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        self.showError("Failed to delete account: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        self.showError("Invalid response")
+                        return
+                    }
+                    
+                    if httpResponse.statusCode == 200 {
+                        // Success - show message and log out
+                        self.showAccountDeletedMessage()
+                    } else {
+                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                            print("Delete failed with status \(httpResponse.statusCode): \(responseString)")
+                        }
+                        self.showError("Failed to delete account (Status: \(httpResponse.statusCode))")
+                    }
+                }
+            }.resume()
+        }
+    }
+    
+    private func showAccountDeletedMessage() {
+        let alert = UIAlertController(
+            title: "Account Deleted",
+            message: "Your account has been successfully deleted. All your data has been removed.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            // Log out and return to main menu
+            self?.authService.logout { _ in }
+            self?.showMainMenu()
+        })
+        
+        present(alert, animated: true)
+    }
 
     // MARK: - Authentication Methods
     private func login(email: String, password: String) {
@@ -825,8 +965,9 @@ class LoginViewController: UIViewController {
         signUpButton.isHidden = true
         errorLabel.isHidden = true
         
-        // Show logout button
+        // Show logout and delete account buttons
         logoutButton.isHidden = false
+        deleteAccountButton.isHidden = false
         
         // Update navigation bar to show + and ? buttons
         updateNavigationBarForRespiratoryUsers()
@@ -1082,6 +1223,7 @@ class LoginViewController: UIViewController {
             emptyManagedUsersTextView.isHidden = true
             refreshManagedUsersButton.isHidden = true
             logoutButton.isHidden = true
+            deleteAccountButton.isHidden = true
             
             // Show login form
             emailTextField.isHidden = false
@@ -1139,6 +1281,7 @@ class LoginViewController: UIViewController {
         emptyManagedUsersTextView.isHidden = true
         refreshManagedUsersButton.isHidden = true
         logoutButton.isHidden = true
+        deleteAccountButton.isHidden = true
         
         // Remove back button from navigation bar
         navigationItem.leftBarButtonItem = nil
