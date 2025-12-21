@@ -9,6 +9,7 @@ class AccountViewController: UIViewController {
     private var contentView: UIView!
     private var emailLabel: UILabel!
     private var createdDateLabel: UILabel!
+    private var formsHeaderLabel: UILabel!
     private var formsTableView: UITableView!
     private var deleteAccountButton: UIButton!
     
@@ -65,6 +66,14 @@ class AccountViewController: UIViewController {
         createdDateLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(createdDateLabel)
         
+        // Forms header label
+        formsHeaderLabel = UILabel()
+        formsHeaderLabel.text = "Accepted Forms"
+        formsHeaderLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        formsHeaderLabel.textColor = .white
+        formsHeaderLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(formsHeaderLabel)
+        
         // Forms table view
         formsTableView = UITableView()
         formsTableView.backgroundColor = .white
@@ -113,8 +122,13 @@ class AccountViewController: UIViewController {
             createdDateLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             createdDateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             
+            // Forms header label
+            formsHeaderLabel.topAnchor.constraint(equalTo: createdDateLabel.bottomAnchor, constant: 20),
+            formsHeaderLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            formsHeaderLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
             // Forms table view
-            formsTableView.topAnchor.constraint(equalTo: createdDateLabel.bottomAnchor, constant: 20),
+            formsTableView.topAnchor.constraint(equalTo: formsHeaderLabel.bottomAnchor, constant: 8),
             formsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             formsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             formsTableView.heightAnchor.constraint(equalToConstant: 220), // Approximate height for 4 rows
@@ -169,13 +183,43 @@ class AccountViewController: UIViewController {
         }
         
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self,
-                  let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let currentUser = json["currentUser"] as? [String: Any],
-                  let forms = currentUser["forms"] as? [String: [String: String]] else {
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error loading forms data: \(error)")
                 return
             }
+            
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+            
+            // Print raw response for debugging
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("Forms data response: \(responseString)")
+            }
+            
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                print("Failed to parse JSON")
+                return
+            }
+            
+            print("Parsed JSON: \(json)")
+            
+            guard let currentUser = json["currentUser"] as? [String: Any] else {
+                print("No currentUser in response")
+                return
+            }
+            
+            print("Current user: \(currentUser)")
+            
+            guard let forms = currentUser["forms"] as? [String: Any] else {
+                print("No forms field or wrong format. Forms value: \(currentUser["forms"] ?? "nil")")
+                return
+            }
+            
+            print("Forms: \(forms)")
             
             // Parse forms data
             var formsArray: [(name: String, acceptedAt: String, version: String)] = []
@@ -184,9 +228,9 @@ class AccountViewController: UIViewController {
             let formDisplayNames = ["Disclaimer", "Consent Form", "Privacy Policy", "Terms of Service"]
             
             for (index, formName) in formNames.enumerated() {
-                if let formData = forms[formName],
-                   let acceptedAt = formData["accepted_at"],
-                   let version = formData["version_accepted"] {
+                if let formData = forms[formName] as? [String: Any],
+                   let acceptedAt = formData["accepted_at"] as? String,
+                   let version = formData["version_accepted"] as? String {
                     
                     // Format the accepted_at date
                     let dateFormatter = ISO8601DateFormatter()
@@ -203,18 +247,24 @@ class AccountViewController: UIViewController {
                         acceptedAt: formattedDate,
                         version: version
                     ))
+                } else {
+                    print("Failed to parse form: \(formName)")
                 }
             }
+            
+            print("Parsed \(formsArray.count) forms")
             
             DispatchQueue.main.async {
                 self.formsData = formsArray
                 self.formsTableView.reloadData()
                 
                 // Update table height based on content
-                let height = CGFloat(formsArray.count) * 55.0
-                self.formsTableView.constraints.forEach { constraint in
-                    if constraint.firstAttribute == .height {
-                        constraint.constant = height
+                if formsArray.count > 0 {
+                    let height = CGFloat(formsArray.count) * 55.0
+                    self.formsTableView.constraints.forEach { constraint in
+                        if constraint.firstAttribute == .height {
+                            constraint.constant = height
+                        }
                     }
                 }
             }
