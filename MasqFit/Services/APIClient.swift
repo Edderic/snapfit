@@ -91,7 +91,122 @@ class APIClient {
             }
         }.resume()
     }
+
+    func fetchAggregatedFacialMeasurements(for userId: Int, completion: @escaping (Result<[String: Double], APIError>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/users/\(userId)/facial_measurements") else {
+            completion(.failure(.invalidURL))
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        if let sessionToken = authService.sessionToken {
+            request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        }
+
+        if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+            let cookieHeader = HTTPCookie.requestHeaderFields(with: cookies)
+            for (key, value) in cookieHeader {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
+
+        urlSession.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(.failure(.networkError(error)))
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    completion(.failure(.invalidResponse))
+                    return
+                }
+
+                guard httpResponse.statusCode == 200, let data = data else {
+                    completion(.failure(.serverError(httpResponse.statusCode)))
+                    return
+                }
+
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let measurements = json["facial_measurements"] as? [[String: Any]],
+                      let first = measurements.first,
+                      let aggregated = first["aggregated"] as? [String: Any] else {
+                    completion(.failure(.decodingError))
+                    return
+                }
+
+                var result: [String: Double] = [:]
+                for key in ["nose_mm", "strap_mm", "top_cheek_mm", "mid_cheek_mm", "chin_mm"] {
+                    if let value = aggregated[key] as? Double {
+                        result[key] = value
+                    } else if let number = aggregated[key] as? NSNumber {
+                        result[key] = number.doubleValue
+                    }
+                }
+
+                completion(.success(result))
+            }
+        }.resume()
+    }
     
+    /// Fetch mask recommendations from the Rails backend
+    func fetchMaskRecommendations(_ measurements: [String: Double], completion: @escaping (Result<[[String: Any]], APIError>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/mask_recommender.json") else {
+            completion(.failure(.invalidURL))
+            return
+        }
+
+        var payload = measurements
+        if payload["facial_hair_beard_length_mm"] == nil {
+            payload["facial_hair_beard_length_mm"] = 0
+        }
+        let requestPayload: [String: Any] = ["facial_measurements": payload]
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestPayload) else {
+            completion(.failure(.invalidData))
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = jsonData
+
+        if let sessionToken = authService.sessionToken {
+            request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        }
+
+        urlSession.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(.failure(.networkError(error)))
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    completion(.failure(.invalidResponse))
+                    return
+                }
+
+                guard httpResponse.statusCode == 200, let data = data else {
+                    completion(.failure(.serverError(httpResponse.statusCode)))
+                    return
+                }
+
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                    completion(.failure(.decodingError))
+                    return
+                }
+
+                completion(.success(json))
+            }
+        }.resume()
+    }
+
     /// Create a new managed user
     func createManagedUser(completion: @escaping (Result<ManagedUser, APIError>) -> Void) {
         guard let url = URL(string: "\(baseURL)/managed_users") else {

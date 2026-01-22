@@ -5,6 +5,10 @@ import SafariServices
 
 @available(iOS 13.0, *)
 class FaceMeasurementViewController: UIViewController {
+    enum MeasurementMode {
+        case contribute
+        case recommend
+    }
 
     // MARK: - UI Elements
     var sceneView: ARSCNView!
@@ -33,6 +37,8 @@ class FaceMeasurementViewController: UIViewController {
     var authService: AuthenticationService?
     var apiClient: APIClient?
     var offlineSyncManager: OfflineSyncManager?
+    var measurementMode: MeasurementMode = .contribute
+    var onRecommend: (([String: Double]) -> Void)?
 
     // MARK: - Overlay Properties
     private var landmarkNodes: [Int: SCNNode] = [:]
@@ -132,7 +138,8 @@ class FaceMeasurementViewController: UIViewController {
 
         // Create save button (formerly export button)
         exportButton = UIButton(type: .system)
-        exportButton.setTitle("Save", for: .normal)
+        let exportTitle = measurementMode == .recommend ? "Recommend" : "Save"
+        exportButton.setTitle(exportTitle, for: .normal)
         exportButton.backgroundColor = UIColor.systemGreen
         exportButton.setTitleColor(UIColor.white, for: .normal)
         exportButton.layer.cornerRadius = 8
@@ -445,7 +452,12 @@ class FaceMeasurementViewController: UIViewController {
     }
 
     @objc func saveButtonTapped(_ sender: UIButton) {
-        saveData()
+        switch measurementMode {
+        case .recommend:
+            handleRecommend()
+        case .contribute:
+            saveData()
+        }
     }
 
     @objc func cancelButtonTapped(_ sender: UIButton) {
@@ -533,7 +545,9 @@ class FaceMeasurementViewController: UIViewController {
         exportButton.isEnabled = true
         progressView.isHidden = true
 
-        instructionLabel.text = "Measurement complete! You can now export your data."
+        instructionLabel.text = measurementMode == .recommend
+            ? "Measurement complete! You can now get recommendations."
+            : "Measurement complete! You can now export your data."
         statusLabel.text = "Measurement complete"
 
         // Reset background color
@@ -564,6 +578,76 @@ class FaceMeasurementViewController: UIViewController {
         }
 
         measurementLabel.text = measurementText
+    }
+
+    private func handleRecommend() {
+        let exported = measurementEngine.exportMeasurements()
+        guard let aggregated = computeAggregatedMeasurements(from: exported) else {
+            showError("Missing required facial measurements. Please re-run the measurement.")
+            return
+        }
+        onRecommend?(aggregated)
+    }
+
+    private func computeAggregatedMeasurements(from exported: [String: Any]) -> [String: Double]? {
+        guard let averageMeasurements = exported["average_measurements"] as? [String: Any] else {
+            return nil
+        }
+
+        let noseKeys = [
+            "160-371", "371-367", "367-387", "387-14",
+            "609-802", "802-798", "798-14", "14-818"
+        ]
+        let strapKeys = [
+            "967-464", "464-456", "456-451", "451-455",
+            "999-1027", "1027-884", "884-883", "883-879"
+        ]
+        let topCheekKeys = [
+            "879-600", "600-756", "756-862", "862-753", "753-594", "594-582", "582-609",
+            "451-151", "151-321", "321-434", "434-318", "318-145", "145-133", "133-160"
+        ]
+        let midCheekKeys = [
+            "509-893", "893-894", "894-881", "881-880", "880-879",
+            "60-478", "478-479", "479-453", "453-452", "452-451"
+        ]
+        let chinKeys = [
+            "1049-983", "983-982", "982-1050", "1050-1051", "1051-1052", "1052-1053", "1053-509",
+            "1049-984", "984-985", "985-986", "986-987", "987-988", "988-989", "989-60"
+        ]
+
+        func sum(keys: [String]) -> Double? {
+            var total = 0.0
+            var found = false
+            for key in keys {
+                guard let entry = averageMeasurements[key] as? [String: Any] else {
+                    continue
+                }
+                if let value = entry["value"] as? Double, value > 0 {
+                    total += value
+                    found = true
+                } else if let number = entry["value"] as? NSNumber, number.doubleValue > 0 {
+                    total += number.doubleValue
+                    found = true
+                }
+            }
+            return found ? total : nil
+        }
+
+        guard let nose = sum(keys: noseKeys),
+              let strap = sum(keys: strapKeys),
+              let topCheek = sum(keys: topCheekKeys),
+              let midCheek = sum(keys: midCheekKeys),
+              let chin = sum(keys: chinKeys) else {
+            return nil
+        }
+
+        return [
+            "nose_mm": nose,
+            "strap_mm": strap,
+            "top_cheek_mm": topCheek,
+            "mid_cheek_mm": midCheek,
+            "chin_mm": chin
+        ]
     }
 
     // MARK: - Data Save

@@ -567,21 +567,7 @@ class LoginViewController: UIViewController {
     }
 
     @objc private func recommendMasksButtonTapped() {
-        let alert = UIAlertController(
-            title: "Coming Soon",
-            message: "This functionality will be added in the near future. Stay tuned! Questions? Please email info@breathesafe.xyz.",
-            preferredStyle: .alert
-        )
-        
-        // Add email action
-        alert.addAction(UIAlertAction(title: "Email Us", style: .default) { _ in
-            if let url = URL(string: "mailto:info@breathesafe.xyz") {
-                UIApplication.shared.open(url)
-            }
-        })
-        
-        alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-        present(alert, animated: true)
+        openRecommendationCapture()
     }
 
     @objc private func contributeDataButtonTapped() {
@@ -935,6 +921,11 @@ class LoginViewController: UIViewController {
             self?.present(safariVC, animated: true)
         })
 
+        // Recommend masks action
+        alert.addAction(UIAlertAction(title: "Recommend Masks", style: .default) { [weak self] _ in
+            self?.recommendMasksForManagedUser(user)
+        })
+
         // View Fit Tests action (only show if user has at least one fit test)
         if let maskCount = user.numUniqueMasksTested, maskCount > 0 {
             alert.addAction(UIAlertAction(title: "View Fit Tests", style: .default) { [weak self] _ in
@@ -969,6 +960,87 @@ class LoginViewController: UIViewController {
         }
 
         present(alert, animated: true)
+    }
+
+    private func openRecommendationCapture() {
+        let faceMeasurementVC = FaceMeasurementViewController()
+        faceMeasurementVC.measurementMode = .recommend
+        faceMeasurementVC.onRecommend = { [weak self, weak faceMeasurementVC] measurements in
+            guard let self = self else { return }
+            faceMeasurementVC?.navigationController?.dismiss(animated: true) {
+                self.fetchRecommendationsAndOpen(with: measurements)
+            }
+        }
+
+        let navController = UINavigationController(rootViewController: faceMeasurementVC)
+        navController.modalPresentationStyle = .fullScreen
+        present(navController, animated: true)
+    }
+
+    private func recommendMasksForManagedUser(_ user: ManagedUser) {
+        guard let managedId = user.managedId else {
+            showError("Invalid user ID")
+            return
+        }
+        apiClient.fetchAggregatedFacialMeasurements(for: managedId) { [weak self] result in
+            switch result {
+            case .success(let measurements):
+                let requiredKeys = ["nose_mm", "strap_mm", "top_cheek_mm", "mid_cheek_mm", "chin_mm"]
+                let missing = requiredKeys.contains { key in
+                    guard let value = measurements[key] else { return true }
+                    return value <= 0
+                }
+                if missing {
+                    self?.showError("Missing facial measurements for this user. Please add ARKit data first.")
+                    return
+                }
+                self?.fetchRecommendationsAndOpen(with: measurements)
+            case .failure(let error):
+                self?.showError("Failed to load facial measurements: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func fetchRecommendationsAndOpen(with measurements: [String: Double]) {
+        apiClient.fetchMaskRecommendations(measurements) { [weak self] result in
+            switch result {
+            case .success:
+                self?.openRecommendationsBrowser(with: measurements)
+            case .failure(let error):
+                self?.showError("Failed to load mask recommendations: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func openRecommendationsBrowser(with measurements: [String: Double]) {
+        guard let url = buildRecommendationURL(with: measurements) else {
+            showError("Failed to build recommendation URL")
+            return
+        }
+        let safariVC = SFSafariViewController(url: url)
+        safariVC.preferredControlTintColor = UIColor(red: 47/255, green: 128/255, blue: 237/255, alpha: 1.0)
+        present(safariVC, animated: true)
+    }
+
+    private func buildRecommendationURL(with measurements: [String: Double]) -> URL? {
+        var payload = measurements
+        if payload["facial_hair_beard_length_mm"] == nil {
+            payload["facial_hair_beard_length_mm"] = 0
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: payload) else {
+            return nil
+        }
+        let encoded = encodePayloadForURL(data)
+        let urlString = "https://www.breathesafe.xyz/#/masks?recommenderPayload=\(encoded)"
+        return URL(string: urlString)
+    }
+
+    private func encodePayloadForURL(_ data: Data) -> String {
+        let base64 = data.base64EncodedString()
+        return base64
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
     
     private func openAddEditUser(for user: ManagedUser, section: AddEditUserViewController.Section) {
