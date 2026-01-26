@@ -1002,12 +1002,41 @@ class LoginViewController: UIViewController {
     }
 
     private func fetchRecommendationsAndOpen(with measurements: [String: Double]) {
-        apiClient.fetchMaskRecommendations(measurements) { [weak self] result in
+        apiClient.startMaskRecommendationJob(measurements) { [weak self] result in
             switch result {
-            case .success:
-                self?.openRecommendationsBrowser(with: measurements)
+            case .success(let jobId):
+                self?.pollRecommendationStatus(jobId: jobId, measurements: measurements, attempt: 0)
             case .failure(let error):
-                self?.showError("Failed to load mask recommendations: \(error.localizedDescription)")
+                self?.showError("Failed to start recommendations: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func pollRecommendationStatus(jobId: String, measurements: [String: Double], attempt: Int) {
+        let maxAttempts = 60
+        if attempt >= maxAttempts {
+            showError("Recommendations are taking too long. Please try again.")
+            return
+        }
+
+        apiClient.fetchMaskRecommendationJobStatus(jobId) { [weak self] result in
+            switch result {
+            case .success(let payload):
+                let status = (payload["status"] as? String) ?? ""
+                if status == "complete" {
+                    self?.openRecommendationsBrowser(with: measurements)
+                    return
+                }
+                if status == "failed" {
+                    let errorMessage = payload["error"] as? String ?? "Unknown error"
+                    self?.showError("Failed to load recommendations: \(errorMessage)")
+                    return
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    self?.pollRecommendationStatus(jobId: jobId, measurements: measurements, attempt: attempt + 1)
+                }
+            case .failure(let error):
+                self?.showError("Failed to load recommendations: \(error.localizedDescription)")
             }
         }
     }
