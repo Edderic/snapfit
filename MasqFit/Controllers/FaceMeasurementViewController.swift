@@ -21,6 +21,8 @@ class FaceMeasurementViewController: UIViewController {
     var progressView: UIProgressView!
     var logoutButton: UIButton!
     var toggleMeasurementsButton: UIButton!
+    private var loadingOverlay: UIView!
+    private var loadingIndicator: UIActivityIndicatorView!
 
     // MARK: - Properties
     private let measurementEngine = MeasurementEngine()
@@ -184,6 +186,17 @@ class FaceMeasurementViewController: UIViewController {
         toggleMeasurementsButton.addTarget(self, action: #selector(toggleMeasurementsButtonTapped(_:)), for: .touchUpInside)
         view.addSubview(toggleMeasurementsButton)
 
+        loadingOverlay = UIView()
+        loadingOverlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        loadingOverlay.translatesAutoresizingMaskIntoConstraints = false
+        loadingOverlay.isHidden = true
+        view.addSubview(loadingOverlay)
+
+        loadingIndicator = UIActivityIndicatorView(style: .large)
+        loadingIndicator.color = UIColor.white
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        loadingOverlay.addSubview(loadingIndicator)
+
         // Set up constraints
         setupConstraints()
     }
@@ -245,8 +258,28 @@ class FaceMeasurementViewController: UIViewController {
             toggleMeasurementsButton.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -12),
             toggleMeasurementsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             toggleMeasurementsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44)
+            toggleMeasurementsButton.heightAnchor.constraint(equalToConstant: 44),
+
+            loadingOverlay.topAnchor.constraint(equalTo: view.topAnchor),
+            loadingOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            loadingOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            loadingOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            loadingIndicator.centerXAnchor.constraint(equalTo: loadingOverlay.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: loadingOverlay.centerYAnchor)
         ])
+    }
+
+    func setLoading(_ isLoading: Bool) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.loadingOverlay.isHidden = !isLoading
+            if isLoading {
+                self.loadingIndicator.startAnimating()
+            } else {
+                self.loadingIndicator.stopAnimating()
+            }
+        }
     }
 
     private func setupARKit() {

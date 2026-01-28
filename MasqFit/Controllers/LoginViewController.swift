@@ -967,9 +967,10 @@ class LoginViewController: UIViewController {
         faceMeasurementVC.measurementMode = .recommend
         faceMeasurementVC.onRecommend = { [weak self, weak faceMeasurementVC] measurements in
             guard let self = self else { return }
-            faceMeasurementVC?.navigationController?.dismiss(animated: true) {
-                self.fetchRecommendationsAndOpen(with: measurements)
-            }
+            self.fetchRecommendationsAndOpen(
+                with: measurements,
+                presentingMeasurementVC: faceMeasurementVC
+            )
         }
 
         let navController = UINavigationController(rootViewController: faceMeasurementVC)
@@ -1001,41 +1002,64 @@ class LoginViewController: UIViewController {
         }
     }
 
-    private func fetchRecommendationsAndOpen(with measurements: [String: Double]) {
+    private func fetchRecommendationsAndOpen(
+        with measurements: [String: Double],
+        presentingMeasurementVC: FaceMeasurementViewController? = nil
+    ) {
+        presentingMeasurementVC?.setLoading(true)
         apiClient.startMaskRecommendationJob(measurements) { [weak self] result in
             switch result {
             case .success(let jobId):
-                self?.pollRecommendationStatus(jobId: jobId, measurements: measurements, attempt: 0)
+                self?.pollRecommendationStatus(
+                    jobId: jobId,
+                    measurements: measurements,
+                    attempt: 0,
+                    presentingMeasurementVC: presentingMeasurementVC
+                )
             case .failure(let error):
+                presentingMeasurementVC?.setLoading(false)
                 self?.showError("Failed to start recommendations: \(error.localizedDescription)")
             }
         }
     }
 
-    private func pollRecommendationStatus(jobId: String, measurements: [String: Double], attempt: Int) {
-        let maxAttempts = 60
-        if attempt >= maxAttempts {
-            showError("Recommendations are taking too long. Please try again.")
-            return
-        }
-
+    private func pollRecommendationStatus(
+        jobId: String,
+        measurements: [String: Double],
+        attempt: Int,
+        presentingMeasurementVC: FaceMeasurementViewController? = nil
+    ) {
         apiClient.fetchMaskRecommendationJobStatus(jobId) { [weak self] result in
             switch result {
             case .success(let payload):
                 let status = (payload["status"] as? String) ?? ""
                 if status == "complete" {
-                    self?.openRecommendationsBrowser(with: measurements)
+                    presentingMeasurementVC?.setLoading(false)
+                    if let navController = presentingMeasurementVC?.navigationController {
+                        navController.dismiss(animated: true) { [weak self] in
+                            self?.openRecommendationsBrowser(with: measurements)
+                        }
+                    } else {
+                        self?.openRecommendationsBrowser(with: measurements)
+                    }
                     return
                 }
                 if status == "failed" {
                     let errorMessage = payload["error"] as? String ?? "Unknown error"
+                    presentingMeasurementVC?.setLoading(false)
                     self?.showError("Failed to load recommendations: \(errorMessage)")
                     return
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                    self?.pollRecommendationStatus(jobId: jobId, measurements: measurements, attempt: attempt + 1)
+                    self?.pollRecommendationStatus(
+                        jobId: jobId,
+                        measurements: measurements,
+                        attempt: attempt + 1,
+                        presentingMeasurementVC: presentingMeasurementVC
+                    )
                 }
             case .failure(let error):
+                presentingMeasurementVC?.setLoading(false)
                 self?.showError("Failed to load recommendations: \(error.localizedDescription)")
             }
         }
